@@ -687,7 +687,12 @@ def freyberg_center_on_test():
                                worker_root=model_d,port=port)
 
     base_phi = pd.read_csv(os.path.join(test_d,"pest_base.phi.actual.csv"),index_col=0)
-    
+    shutil.copy2(os.path.join(test_d,"pest_base.0.par.csv"),os.path.join(template_d,"par.csv"))
+    shutil.copy2(os.path.join(test_d,"pest_base.0.obs.csv"),os.path.join(template_d,"obs.csv"))
+    #shutil.copy2(os.path.join(test_d,"pest_base.obs+noise.csv"),os.path.join(template_d,"noise.csv"))
+    pst.pestpp_options["ies_par_en"] = "par.csv"
+    #pst.pestpp_options["ies_obs_en"] = "noise.csv"
+    pst.pestpp_options["ies_restart_obs_en"] = "obs.csv"
     pst.pestpp_options["ies_center_on"] = "base"
     pst.write(os.path.join(template_d, "pest_center_on.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_center_on.pst", num_workers=5, master_dir=test_d,
@@ -953,4 +958,6 @@ if __name__ == "__main__":
     #freyberg_center_on_test()
     #freyberg_pdc_test()
     #freyberg_rcov_test()
-    tenpar_align_test()
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    freyberg_center_on_test()
+    #tenpar_align_test()
