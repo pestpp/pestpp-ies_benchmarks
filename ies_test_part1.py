@@ -159,7 +159,7 @@ def tenpar_full_cov_test():
     pe_corr = pe.corr().loc[p1,p2]
     df_corr = df.corr().loc[p1,p2]
     diff = np.abs((pe_corr - df_corr)/pe_corr)
-    assert diff < 0.1,"{0},{1},{2}".format(pe_corr,df_corr,diff)
+    assert diff < 0.25,"{0},{1},{2}".format(pe_corr,df_corr,diff)
 
     par.loc[pst.adj_par_names,"partrans"] = "log"
     par.loc[:,"parlbnd"] = 1.0e-10
@@ -174,7 +174,7 @@ def tenpar_full_cov_test():
     pe_corr = pe.apply(np.log10).corr().loc[p1, p2]
     df_corr = df.apply(np.log10).corr().loc[p1, p2]
     diff = np.abs((pe_corr - df_corr) / pe_corr)
-    assert diff < 0.1, "{0},{1},{2}".format(pe_corr, df_corr, diff)
+    assert diff < 0.25, "{0},{1},{2}".format(pe_corr, df_corr, diff)
 
 
 def tenpar_subset_test():
