@@ -693,6 +693,7 @@ def freyberg_center_on_test():
     pst.pestpp_options["ies_par_en"] = "par.csv"
     #pst.pestpp_options["ies_obs_en"] = "noise.csv"
     pst.pestpp_options["ies_restart_obs_en"] = "obs.csv"
+    
     pst.pestpp_options["ies_center_on"] = "base"
     pst.write(os.path.join(template_d, "pest_center_on.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_center_on.pst", num_workers=5, master_dir=test_d,
@@ -701,6 +702,12 @@ def freyberg_center_on_test():
     print(base_phi.loc[:,"base"])
     print(center_phi.loc[:,"base"])
 
+    pst.pestpp_options["ies_center_on"] = "_median_"
+    pst.write(os.path.join(template_d, "pest_center_on.pst"))
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_center_on.pst", num_workers=5, master_dir=test_d+"_median",
+                               worker_root=model_d,port=port)
+    center_phi = pd.read_csv(os.path.join(test_d,"pest_center_on.phi.actual.csv"),index_col=0)
+    
     #assert center_phi.loc[pst.control_data.noptmax,"base"] < base_phi.loc[pst.control_data.noptmax,"base"]
 
 def freyberg_pdc_test():
