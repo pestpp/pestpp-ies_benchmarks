@@ -1427,7 +1427,11 @@ if __name__ == "__main__":
     
 
     # full list of tests
-    tenpar_subset_test()
+    #tenpar_subset_test()
+    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+                 os.path.join("..", "bin", "pestpp-ies.exe"))
+
+    tenpar_fixed_test()
     # tenpar_full_cov_test()
     # eval_freyberg_full_cov_reorder()
     #test_freyberg_full_cov_reorder()
