@@ -13,7 +13,7 @@ pcf
          1    1.000000E-03
 0
 * parameter groups
- k                       relative              1.0000000000E-02       0  switch                2.0000000000E+00       parabolic              1.0000000000E-05       5.0000000000E-01       smaller              
+ k                       relative              1.0000000000E-02       0.0  switch                2.0000000000E+00       parabolic              1.0000000000E-05       5.0000000000E-01       smaller              
 * parameter data
  stage                  fixed                  factor                1.0000000000E+00      1.0000000000E-01      3.0000000000E+00       k                     1.0000000000E+00      0.0000000000E+00       1          
  k_01                   fixed                  factor                2.5000000000E+00      2.5000000000E-01      2.5000000000E+01       k                     1.0000000000E+00      0.0000000000E+00       1          
@@ -55,8 +55,5 @@ mfnwt 10par_xsec.nam
 hk_Layer_1.ref.tpl hk_Layer_1.ref
 strt_Layer_1.ref.tpl strt_Layer_1.ref
 10par_xsec.hds.ins 10par_xsec.hds
-++ies_num_reals(10)
-++ies_lambda_mults(1.0)
-++ies_subset_size(5)
-++lambda_scale_fac(1.0)
-++ies_accept_phi_fac(100.0)
+++ies_num_reals(30)
+++ies_group_draws(False)

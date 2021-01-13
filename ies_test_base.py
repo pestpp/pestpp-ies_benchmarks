@@ -63,7 +63,7 @@ else:
 
   
 if "windows" in platform.platform().lower():
-    exe_path = os.path.join(bin_path, "iwin", "ipestpp-ies.exe")
+    exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
 elif "darwin" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
@@ -204,37 +204,39 @@ def run_suite(model_d,silent_master=False):
         #if "6" not in test_vars["text"]:
         #    continue
         compare = False
-        try:
-            pst.pestpp_options = {}
-            for v in ies_vars:
-                if pd.notnull(test_vars[v]):
-                    try:
-                        pst.pestpp_options[v] = test_vars[v].replace('"','')
-                    except:
-                        pst.pestpp_options[v] = test_vars[v]
-
-            pst.pestpp_options["ies_num_reals"] = 30
-            pst.pestpp_options["ies_group_draws"] = False
-            tags = ["par_en","parameter_ensemble"]
-            for tag in tags:
-                if (tag in pst.pestpp_options and len(pst.pestpp_options[tag]) > 0):
-                    compare = True
-
-            pst.write(os.path.join(template_d, "pest.pst"))
-            test_d = os.path.join(model_d, "master_test_{0}".format(test_name))
-            if compare:
-                should_compare.append(test_d)
-            if os.path.exists(test_d):
+        #try:
+        pst.pestpp_options = {}
+        for v in ies_vars:
+            if len(str(test_vars[v]).strip()) == 0:
+                continue
+            if pd.notnull(test_vars[v]):
                 try:
-                    shutil.rmtree(test_d)
+                    pst.pestpp_options[v] = test_vars[v].replace('"','')
                 except:
-                    print("error removing existing test_d: {0}".format(test_d))
-                    continue
-            pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=15,
-                                       master_dir=test_d, verbose=True, worker_root=model_d,
-                                       silent_master=silent_master,port=port)
-        except Exception as e:
-            errors.append("error:"+test_vars["text"]+" "+str(e))
+                    pst.pestpp_options[v] = test_vars[v]
+
+        pst.pestpp_options["ies_num_reals"] = 30
+        pst.pestpp_options["ies_group_draws"] = False
+        tags = ["par_en","parameter_ensemble"]
+        for tag in tags:
+            if (tag in pst.pestpp_options and len(pst.pestpp_options[tag]) > 0):
+                compare = True
+
+        pst.write(os.path.join(template_d, "pest.pst"))
+        test_d = os.path.join(model_d, "master_test_{0}".format(test_name))
+        if compare:
+            should_compare.append(test_d)
+        if os.path.exists(test_d):
+            try:
+                shutil.rmtree(test_d)
+            except:
+                print("error removing existing test_d: {0}".format(test_d))
+                continue
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=15,
+                                   master_dir=test_d, verbose=True, worker_root=model_d,
+                                   silent_master=False,port=port)
+        #except Exception as e:
+        #    errors.append("error:"+test_vars["text"]+" "+str(e))
     if len(errors) > 0:
         raise Exception("\n".join(errors))
     return should_compare
@@ -328,6 +330,8 @@ if __name__ == "__main__":
     #compare_suite("ies_10par_xsec")
     #compare_suite("ies_freyberg")
     #test_freyberg()
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    
     test_10par_xsec()
 
     
