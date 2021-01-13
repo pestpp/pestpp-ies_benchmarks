@@ -894,6 +894,7 @@ def tenpar_align_test():
     oe.to_csv(os.path.join(template_d,"out_of_order_oe.csv"))
     pst.pestpp_options["ies_obs_en"] = "out_of_order_oe.csv"
     pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_num_reals"] = 10
     pst.control_data.noptmax = 1
     pst_name = "pest_align.pst"
     pst.write(os.path.join(template_d,pst_name))
@@ -966,5 +967,5 @@ if __name__ == "__main__":
     #freyberg_pdc_test()
     #freyberg_rcov_test()
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    freyberg_center_on_test()
-    #tenpar_align_test()
+    #freyberg_center_on_test()
+    tenpar_align_test()
