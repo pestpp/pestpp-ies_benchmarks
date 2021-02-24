@@ -996,7 +996,7 @@ if __name__ == "__main__":
     #freyberg_center_on_test()
     #freyberg_pdc_test()
     #freyberg_rcov_test()
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
     #tenpar_align_test()
     tenpar_align_test_2()

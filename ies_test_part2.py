@@ -554,6 +554,7 @@ def tenpar_par_restart_test():
 
     template_d = os.path.join(model_d, "template")
     pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+
     num_reals = 30
     test_d = os.path.join(model_d, "master_easy_restart")
     if os.path.exists(test_d):
@@ -626,6 +627,86 @@ def tenpar_par_restart_test():
     print(diff.max())
     assert diff.max().max()==0.0,diff.max().max()
 
+
+def tenpar_par_restart_byvars_test():
+    """tenpar par restart tests by vars"""
+    model_d = "ies_10par_xsec"
+
+    template_d = os.path.join(model_d, "template")
+    pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+
+    num_reals = 30
+    test_d = os.path.join(model_d, "master_easy_restart_byvars")
+    if os.path.exists(test_d):
+       shutil.rmtree(test_d)
+    #shutil.copytree(template_d, test_d)
+    pst.pestpp_options = {}
+    pst.pestpp_options = {"ies_num_reals":num_reals}
+    pst.pestpp_options["ies_include_base"] = False
+    pst.pestpp_options["ies_csv_by_reals"] = False
+    pst.pestpp_options["ies_subset_how"] = "first"
+    pst.pestpp_options["ies_accept_phi_fac"] = 1.0
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
+    pst.pestpp_options["ies_init_lam"] = 10.0
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.control_data.noptmax = 3
+    pst.write(os.path.join(template_d,"pest_restart.pst"))
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_restart.pst", num_workers=10,
+                                worker_root=model_d, master_dir=test_d, port=port)
+    #pyemu.os_utils.run("{0} {1}".format(exe_path, "pest_restart.pst"), cwd=test_d)
+
+    par_df = pd.read_csv(os.path.join(test_d,"pest_restart.1.par.csv"),index_col=0)
+    #par_df = par_df.iloc[::2,:]
+    par_df.to_csv(os.path.join(template_d,"par1.csv"))
+
+    obs_df = pd.read_csv(os.path.join(test_d,"pest_restart.1.obs.csv"),index_col=0)
+    #obs_df = obs_df.iloc[::2,:]
+    obs_df.to_csv(os.path.join(template_d,"restart1.csv"))
+
+    shutil.copy2(os.path.join(test_d,"pest_restart.obs+noise.csv"),os.path.join(template_d,"base.csv"))
+    shutil.copy2(os.path.join(test_d, "pest_restart.0.par.csv"), os.path.join(template_d, "par_base.csv"))
+
+    #pst.pestpp_options = {}
+    pst.pestpp_options["ies_par_en"] = "par_base.csv"
+    pst.pestpp_options["ies_restart_par_en"] = "par1.csv"
+    # pst.pestpp_options["ies_lambda_mults"] = 1.0
+    # pst.pestpp_options["lambda_scale_fac"] = 1.0
+    # pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
+    # #pst.pestpp_options["ies_debug_fail_subset"] = True
+    #pst.pestpp_options["ies_debug_fail_remainder"] = True
+    #pst.pestpp_options["ies_debug_bad_phi"] = True
+    #pst.pestpp_options["ies_num_reals"] = num_reals
+    pst.pestpp_options["ies_restart_obs_en"] = "restart1.csv"
+    pst.pestpp_options["ies_obs_en"] = "base.csv"
+    pst.control_data.noptmax = 2
+    pst.write(os.path.join(template_d,"pest_restart.pst"))
+    test_d = os.path.join(model_d, "master_easy_restart_byvars_withpar")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_restart.pst", num_workers=10,
+                                worker_root=model_d, master_dir=test_d, port=port)
+    assert os.path.exists(os.path.join(test_d,"pest_restart.{0}.par.csv".format(pst.control_data.noptmax))),\
+        os.listdir(test_d)
+    assert os.path.exists(os.path.join(test_d, "pest_restart.phi.group.csv"))
+    df = pd.read_csv(os.path.join(test_d, "pest_restart.phi.group.csv"))
+    diff = df.obs_realization - df.par_realization
+    assert diff.max() == 0,diff
+
+    phi_df1 = pd.read_csv(os.path.join(test_d, "pest_restart.phi.actual.csv"),index_col=0)
+    pst.pestpp_options.pop("ies_restart_par_en")
+    pst.pestpp_options["ies_par_en"] = "par1.csv"
+    pst.write(os.path.join(template_d, "pest_restart.pst"))
+    test_d = os.path.join(model_d, "master_easy_restart_byvars_nopar")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_restart.pst", num_workers=10,
+                                worker_root=model_d, master_dir=test_d, port=port)
+    phi_df2 = pd.read_csv(os.path.join(test_d, "pest_restart.phi.actual.csv"),index_col=0)
+    diff = (phi_df1 - phi_df2).apply(np.abs)
+    print(diff.max())
+    assert diff.max().max()==0.0,diff.max().max()
 
 def tenpar_rns_test():
     """tenpar rns test"""
@@ -718,6 +799,8 @@ def tenpar_restart_test_2():
     phi_df2 = pd.read_csv(os.path.join(test_d,"pest_restart.phi.composite.csv"),index_col=0)
     diff = np.abs(phi_df1.iloc[-1,1:].values - phi_df2.iloc[0,1:])
     print(diff.sum())
+    print(phi_df1.iloc[-1,1:])
+    print(phi_df2.iloc[0,1:])
     assert diff.sum() < 0.01
 
     df = pd.read_csv(os.path.join(test_d, "pest_restart.phi.group.csv"))
@@ -851,6 +934,8 @@ if __name__ == "__main__":
     #freyberg_dist_local_invest()
     #tenpar_tied_test()
     #tenpar_by_vars_test()
-    #tenpar_par_restart_test()
+
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    tenpar_restart_wo_noise_w_base_test()
+    tenpar_par_restart_byvars_test()
+    #tenpar_restart_wo_noise_w_base_test()
+    #tenpar_restart_test_2()

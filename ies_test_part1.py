@@ -1431,7 +1431,7 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
                  os.path.join("..", "bin", "pestpp-ies.exe"))
 
-    tenpar_fixed_test()
+    #tenpar_fixed_test()
     # tenpar_full_cov_test()
     # eval_freyberg_full_cov_reorder()
     #test_freyberg_full_cov_reorder()
@@ -1458,7 +1458,10 @@ if __name__ == "__main__":
     # tenpar_rns_test()
     # clues_longnames_test()
     # tenpar_localize_how_test()
-    #tenpar_incr_num_reals_test()
+    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+                 os.path.join("..", "bin", "win", "pestpp-ies.exe"))
+
+    tenpar_incr_num_reals_test()
     #freyberg_dist_local_invest()
     #test_freyberg_full_cov_reorder_run()
     #test_freyberg_full_cov()
