@@ -513,21 +513,39 @@ def tenpar_localize_how_test():
                                 port=port)
     mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
     mat.loc[:, :] = 1.0
-    mat.iloc[0,:] = 0
+    mat.iloc[0,1:] = 0
+    mat.iloc[1,:] = np.arange(mat.shape[1]) / mat.shape[1]
+    mat.iloc[:2,:] = 1
     mat.iloc[:,-1] = 0
+    print(mat)
     mat = pyemu.Matrix.from_dataframe(mat)
     mat.to_ascii(os.path.join(template_d, "localizer.mat"))
     pst.control_data.noptmax = 2
+    par = pst.parameter_data
+
     pst.write(os.path.join(template_d, "pest_local_p.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_p.pst", num_workers=10,
                                 master_dir=test_d + "_p", verbose=True, worker_root=model_d,
                                 port=port)
-    pst.pestpp_options["ies_localize_how"] = "o"
-    pst.control_data.noptmax = 2
+    
+    par.loc[pst.adj_par_names[:2],"pargp"] = "test_group"
+    adj_groups = par.loc[pst.adj_par_names,"pargp"].unique()
+    mat = pyemu.Matrix.from_names(pst.nnz_obs_names,adj_groups).to_dataframe()
+    mat.loc[:, :] = 0.1
+    mat.iloc[:,0] = 0.0
+    mat = pyemu.Matrix.from_dataframe(mat)
+    mat.to_ascii(os.path.join(template_d, "localizer.mat"))
     pst.write(os.path.join(template_d, "pest_local_p.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_p.pst", num_workers=10,
                                 master_dir=test_d + "_p", verbose=True, worker_root=model_d,
                                 port=port)
+
+    #pst.pestpp_options["ies_localize_how"] = "o"
+    #pst.control_data.noptmax = 2
+    #pst.write(os.path.join(template_d, "pest_local_p.pst"))
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_p.pst", num_workers=10,
+    #                            master_dir=test_d + "_p", verbose=True, worker_root=model_d,
+    #                            port=port)
 
 def freyberg_local_threads_test():
     import flopy
@@ -865,9 +883,9 @@ if __name__ == "__main__":
     #tenpar_xsec_autoadaloc_test()
     #tenpar_xsec_combined_autoadaloc_test()
     #tenpar_xsec_aal_sigma_dist_test()
-    tenpar_by_vars_test()
+    #tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
-    #tenpar_localize_how_test()
+    tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
