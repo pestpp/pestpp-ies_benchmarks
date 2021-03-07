@@ -635,7 +635,7 @@ def freyberg_local_threads_test():
     pst.write(os.path.join(template_d, "pest_local.pst"))
     d = test_d+"_base"
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_local.pst", num_workers=20, master_dir=d,
-                               worker_root=model_d,port=port)
+                               worker_root=model_d,port=port, verbose=True)
 
     def get_results(dd):
 
@@ -883,9 +883,11 @@ if __name__ == "__main__":
     #tenpar_xsec_autoadaloc_test()
     #tenpar_xsec_combined_autoadaloc_test()
     #tenpar_xsec_aal_sigma_dist_test()
+    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+                 os.path.join("..", "bin", "win","pestpp-ies.exe"))
     #tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
-    tenpar_localize_how_test()
+    #tenpar_localize_how_test()
     #clues_longnames_test()
-    #freyberg_local_threads_test()
+    freyberg_local_threads_test()
