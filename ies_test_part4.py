@@ -973,6 +973,53 @@ def tenpar_align_test_2():
             raise Exception("misaligned indices in row {0}: {1} vs {2}".format(i,p,o))
 
 
+def tenpar_covloc_test():
+    model_d = "ies_10par_xsec"
+
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+    pst.parameter_data.loc[:,"partrans"] = "none"
+    pst.control_data.noptmax = 2
+    pst.pestpp_options = {}
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_verbose_level"] = 4
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_use_approx"] = False
+    pst.pestpp_options["ies_use_prior_scaling"] = True
+    pst.write(os.path.join(template_d,"pest_covloc_base.pst"))
+    test_d = os.path.join(model_d, "master_covloc_base")
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_covloc_base.pst", num_workers=8, master_dir=test_d,
+                                 worker_root=model_d, port=port)
+
+    phi1 = pd.read_csv(os.path.join(test_d, "pest_covloc_base.phi.actual.csv"), index_col=0)
+    shutil.copy2(os.path.join(test_d,"pest_covloc_base.0.par.csv"),os.path.join(template_d,"restart_par.csv"))
+    shutil.copy2(os.path.join(test_d, "pest_covloc_base.0.obs.csv"), os.path.join(template_d, "restart_obs.csv"))
+    shutil.copy2(os.path.join(test_d, "pest_covloc_base.obs+noise.csv"), os.path.join(template_d, "obs+noise.csv"))
+
+    pst.pestpp_options["ies_par_en"] = "restart_par.csv"
+    pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
+    pst.pestpp_options["ies_obs_en"] = "obs+noise.csv"
+    pst.pestpp_options["ies_autoadaloc"] = True
+    pst.pestpp_options["ies_autoadaloc_sigma_dist"] = 0.0
+    pst.pestpp_options["ies_loc_type"] = "cov"
+    pst.pestpp_options["forgive_unknown_args"] = True
+
+    pst.write(os.path.join(template_d, "pest_covloc.pst"))
+    test_d = os.path.join(model_d, "master_covloc")
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_covloc.pst", num_workers=8, master_dir=test_d,
+                                 worker_root=model_d, port=port)
+    phi2 = pd.read_csv(os.path.join(test_d,"pest_covloc.phi.actual.csv"),index_col=0)
+    d = (phi1.iloc[:,2:] - phi2.iloc[:,2:]).apply(np.abs)
+    print(d)
+    print(d.max())
+    assert d.max().max() < 1.0e-6,d.max().max()
+
+
 
 if __name__ == "__main__":
     #tenpar_base_run_test()
@@ -999,4 +1046,5 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
     #tenpar_align_test()
-    tenpar_align_test_2()
+    #tenpar_align_test_2()
+    tenpar_covloc_test()
