@@ -983,9 +983,10 @@ def tenpar_covloc_test():
     pst_name = os.path.join(template_d, "pest.pst")
     pst = pyemu.Pst(pst_name)
     pst.parameter_data.loc[:,"partrans"] = "none"
+    pst.observation_data.loc[:,"weight"] = 1.0
     pst.control_data.noptmax = 2
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_num_reals"] = 5
     pst.pestpp_options["ies_verbose_level"] = 4
     pst.pestpp_options["ies_lambda_mults"] = 1.0
     pst.pestpp_options["lambda_scale_fac"] = 1.0
@@ -1017,8 +1018,16 @@ def tenpar_covloc_test():
     d = (phi1.iloc[:,2:] - phi2.iloc[:,2:]).apply(np.abs)
     print(d)
     print(d.max())
-    assert d.max().max() < 1.0e-6,d.max().max()
+    assert d.max().max() < 1.0e-3,d.max().max()
 
+    pst.pestpp_options["ies_loc_type"] = "local"
+    pst.pestpp_options["forgive_unknown_args"] = True
+    pst.pestpp_options["ies_localize_how"] = "observations"
+
+    pst.write(os.path.join(template_d, "pest_localloc.pst"))
+    test_d = os.path.join(model_d, "master_localloc")
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_localloc.pst", num_workers=8, master_dir=test_d,
+                                 worker_root=model_d, port=port)
 
 
 if __name__ == "__main__":
@@ -1045,6 +1054,6 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
-    #tenpar_align_test()
+    tenpar_align_test()
     #tenpar_align_test_2()
-    tenpar_covloc_test()
+    #tenpar_covloc_test()
