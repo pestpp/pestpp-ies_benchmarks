@@ -715,6 +715,9 @@ def test_freyberg_ineq():
     print("starting slaves")
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_ineq.pst", num_workers=10, master_dir=test_d,
                                worker_root=model_d,port=port)
+    with open(os.path.join(test_d,"pest_ineq.rmr"),'r') as f:
+        for line in f:
+            print(line)
 
     obs_csvs = [f for f in os.listdir(test_d) if f.endswith("obs.csv")]
     print(obs_csvs)
@@ -1461,7 +1464,8 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
                  os.path.join("..", "bin", "win", "pestpp-ies.exe"))
 
-    tenpar_incr_num_reals_test()
+    #tenpar_incr_num_reals_test()
+    test_freyberg_ineq()
     #freyberg_dist_local_invest()
     #test_freyberg_full_cov_reorder_run()
     #test_freyberg_full_cov()
