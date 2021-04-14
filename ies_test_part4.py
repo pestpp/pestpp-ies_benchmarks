@@ -956,7 +956,7 @@ def tenpar_align_test_2():
         shutil.rmtree(test_d)
     shutil.copytree(template_d,test_d)
     pst.pestpp_options["ies_num_reals"] = 10
-    pst.control_data.noptmax = -1
+    pst.control_data.noptmax = 2
     pst_name = "pest_align.pst"
     pst.write(os.path.join(test_d, pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
@@ -971,6 +971,8 @@ def tenpar_align_test_2():
     for i,(p,o) in enumerate(zip(pe.index,oe.index)):
         if p != o:
             raise Exception("misaligned indices in row {0}: {1} vs {2}".format(i,p,o))
+
+
 
 
 def tenpar_covloc_test():
@@ -1030,6 +1032,65 @@ def tenpar_covloc_test():
                                  worker_root=model_d, port=port)
 
 
+def tenpar_upgrade_on_disk_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_upgrade_1")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_no_noise"] = True
+    pst.pestpp_options["ies_lambda_mults"] = [0.1,1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7,1.0]
+    pst.control_data.noptmax = 2
+    pst_name = "pest_upgrade.pst"
+    pst.write(os.path.join(template_d, pst_name))
+    #pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, 
+    							 master_dir=test_d, worker_root=model_d, port=port)
+    phi1 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".phi.actual.csv")))
+    pe1 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".{0}.par.csv".\
+    	format(pst.control_data.noptmax))),index_col=0)
+    oe1 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".{0}.obs.csv".\
+    	format(pst.control_data.noptmax))),index_col=0)
+
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.write(os.path.join(template_d, pst_name))
+    test_d = os.path.join(model_d, "master_upgrade_2")
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, 
+    							 master_dir=test_d, worker_root=model_d, port=port)
+
+    phi2 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".phi.actual.csv")))
+    pe2 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".{0}.par.csv".\
+    	format(pst.control_data.noptmax))),index_col=0)
+    oe2 = pd.read_csv(os.path.join(test_d,pst_name.replace(".pst",".{0}.obs.csv".\
+    	format(pst.control_data.noptmax))),index_col=0)
+
+    d = (phi1 - phi2).apply(np.abs)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
+
+    d = (pe1 - pe2).apply(np.abs)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
+
+    d = (oe1 - oe2).apply(np.abs)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
+
+
+    
+   
 if __name__ == "__main__":
     #tenpar_base_run_test()
     #tenpar_base_par_file_test()
@@ -1054,6 +1115,7 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
-    tenpar_align_test()
+    #tenpar_align_test()
     #tenpar_align_test_2()
     #tenpar_covloc_test()
+    tenpar_upgrade_on_disk_test()

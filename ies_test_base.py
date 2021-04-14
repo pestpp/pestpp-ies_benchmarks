@@ -332,6 +332,6 @@ if __name__ == "__main__":
     #test_freyberg()
     shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     
-    test_10par_xsec()
+    #test_10par_xsec()
 
     
