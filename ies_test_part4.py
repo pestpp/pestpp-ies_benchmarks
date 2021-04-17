@@ -1117,5 +1117,5 @@ if __name__ == "__main__":
     #freyberg_center_on_test()
     #tenpar_align_test()
     #tenpar_align_test_2()
-    tenpar_covloc_test()
-    #tenpar_upgrade_on_disk_test()
+    #tenpar_covloc_test()
+    tenpar_upgrade_on_disk_test()
