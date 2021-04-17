@@ -1005,7 +1005,7 @@ def tenpar_covloc_test():
     shutil.copy2(os.path.join(test_d, "pest_covloc_base.obs+noise.csv"), os.path.join(template_d, "obs+noise.csv"))
 
     pst.pestpp_options["ies_par_en"] = "restart_par.csv"
-    pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
+    #pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
     pst.pestpp_options["ies_obs_en"] = "obs+noise.csv"
     pst.pestpp_options["ies_autoadaloc"] = True
     pst.pestpp_options["ies_autoadaloc_sigma_dist"] = 0.0
@@ -1117,5 +1117,5 @@ if __name__ == "__main__":
     #freyberg_center_on_test()
     #tenpar_align_test()
     #tenpar_align_test_2()
-    #tenpar_covloc_test()
-    tenpar_upgrade_on_disk_test()
+    tenpar_covloc_test()
+    #tenpar_upgrade_on_disk_test()

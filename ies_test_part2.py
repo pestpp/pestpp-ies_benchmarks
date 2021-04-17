@@ -923,7 +923,7 @@ if __name__ == "__main__":
     # tenpar_localizer_test3()
     #freyberg_localizer_test1()
     # freyberg_localizer_eval2()
-    freyberg_localizer_test3()
+    #freyberg_localizer_test3()
     # freyberg_dist_local_test()
     # freyberg_local_threads_test()
     # tenpar_restart_binary_test()
@@ -937,7 +937,7 @@ if __name__ == "__main__":
     #tenpar_tied_test()
     #tenpar_by_vars_test()
 
-
+    tenpar_restart_test()
     #tenpar_par_restart_byvars_test()
     #tenpar_restart_wo_noise_w_base_test()
     #tenpar_restart_test_2()

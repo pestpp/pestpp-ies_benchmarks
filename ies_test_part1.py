@@ -829,6 +829,7 @@ def tenpar_fixed_test():
                                worker_root=model_d,port=port)
     compare()
     pe.to_binary(os.path.join(template_d,"par_fixed.jcb"))
+    print(pe)
     pst.pestpp_options["ies_par_en"] = "par_fixed.jcb"
     pst.write(os.path.join(template_d, "pest.pst"))
     #pyemu.helpers.run("{0} pest.pst".format(exe_path), cwd=test_d)
@@ -1464,8 +1465,11 @@ if __name__ == "__main__":
     shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
                  os.path.join("..", "bin", "win", "pestpp-ies.exe"))
 
+    #import pyemu
+    #m = pyemu.Matrix.from_binary(os.path.join("ies_10par_xsec","master_fixed","pest_fixed.0.par.jcb"))
+    tenpar_fixed_test()
     #tenpar_incr_num_reals_test()
-    test_freyberg_ineq()
+    #test_freyberg_ineq()
     #freyberg_dist_local_invest()
     #test_freyberg_full_cov_reorder_run()
     #test_freyberg_full_cov()

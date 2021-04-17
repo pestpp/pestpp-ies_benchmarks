@@ -721,6 +721,8 @@ def tenpar_tied_test():
                                 port=port)
     
     pe = pyemu.ParameterEnsemble.from_binary(filename=os.path.join(test_d,"pest_tied.0.par.jcb"),pst=pst)
+    assert pe.shape[1] == pst.npar
+    pe = pe.loc[:,pst.par_names]
     assert list(pe.columns) == pst.par_names
 
     pe.loc[:,tnames].sum() == par.loc[tnames,"parval1"]
@@ -890,4 +892,5 @@ if __name__ == "__main__":
     #temp()
     #tenpar_localize_how_test()
     #clues_longnames_test()
-    freyberg_local_threads_test()
+    #freyberg_local_threads_test()
+    tenpar_tied_test()

@@ -1,13 +1,13 @@
 pcf
 * control data
              restart          estimation
-        11        20         1         0         1         0
-         2         1              single               point         1         0         0          noobsreref
-   1.000000E-01  -4.000000E+00   3.000000E-01   3.000000E-02        10       999          lamforgive        noderforgive
-   5.000000E+00   5.000000E+00   1.000000E-03         0         0
-   1.000000E-01         1   1.100000E+00               noaui          nosenreuse        noboundscale
-         2   5.000000E-03         4         4   5.000000E-03         4   0.000000E+00         1  -1.000000E+00
-         1         1         1         0             jcosave          verboserec          jcosaveitn          reisaveitn          parsaveitn        noparsaverun
+        11        20         1         0         1
+         2         1              single               point
+   1.000000E-01  -4.000000E+00   3.000000E-01   3.000000E-02        10
+   5.000000E+00   5.000000E+00   1.000000E-03
+   1.000000E-01
+         2   5.000000E-03         4         4   5.000000E-03         4
+         1         1         1
 * singular value decomposition
          1
          1    1.000000E-03
@@ -55,16 +55,11 @@ mfnwt 10par_xsec.nam
 hk_Layer_1.ref.tpl hk_Layer_1.ref
 strt_Layer_1.ref.tpl strt_Layer_1.ref
 10par_xsec.hds.ins 10par_xsec.hds
-++ies_num_reals(30)
-++ies_include_base(False)
-++ies_csv_by_reals(False)
-++ies_subset_how(first)
-++ies_accept_phi_fac(1.0)
+++ies_par_en(par1.csv)
 ++ies_lambda_mults(1.0)
 ++lambda_scale_fac(1.0)
-++ies_lambda_dec_fac(1.0)
-++ies_init_lam(10.0)
-++ies_save_lambda_en(True)
-++ies_par_en(par1.csv)
+++ies_debug_fail_subset(True)
+++ies_debug_fail_remainder(True)
+++ies_debug_bad_phi(True)
 ++ies_restart_obs_en(restart1.csv)
 ++ies_obs_en(base.csv)
