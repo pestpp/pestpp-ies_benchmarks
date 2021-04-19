@@ -722,7 +722,7 @@ def tenpar_tied_test():
     
     pe = pyemu.ParameterEnsemble.from_binary(filename=os.path.join(test_d,"pest_tied.0.par.jcb"),pst=pst)
     assert pe.shape[1] == pst.npar,"{0} vs {1}".format(pe.shape[1],pst.npar)
-    pe = pe.loc[:,pst.par_names]
+    #pe = pe.loc[:,pst.par_names]
     print(pe.columns)
     print(pst.par_names)
     assert list(pe.columns) == pst.par_names
