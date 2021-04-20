@@ -493,10 +493,10 @@ def tenpar_localize_how_test():
     diff = phi_df1 - phi_df2
     print(diff.max().max())
 
-    plt.plot(phi_df1.total_runs, phi_df1.loc[:, "mean"], label="local")
-    plt.plot(phi_df2.total_runs, phi_df2.loc[:, "mean"], label="full")
-    plt.legend()
-    plt.savefig(os.path.join(test_d+"_p", "local_test.pdf"))
+    # plt.plot(phi_df1.total_runs, phi_df1.loc[:, "mean"], label="local")
+    # plt.plot(phi_df2.total_runs, phi_df2.loc[:, "mean"], label="full")
+    # plt.legend()
+    # plt.savefig(os.path.join(test_d+"_p", "local_test.pdf"))
     assert diff.max().max() == 0
 
     mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
@@ -729,7 +729,6 @@ def tenpar_tied_test():
 
     pe.loc[:,tnames].sum() == par.loc[tnames,"parval1"]
 
-    
 
 def tenpar_by_vars_test():
     """tenpar vars test"""
@@ -892,7 +891,7 @@ if __name__ == "__main__":
     #tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
-    #tenpar_localize_how_test()
+    tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
     tenpar_tied_test()
