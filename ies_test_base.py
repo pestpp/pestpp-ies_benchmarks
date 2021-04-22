@@ -357,15 +357,17 @@ def tenpar_localize_with_drop_test():
     oe.to_csv(os.path.join(template_d, "obs_local.csv"))
 
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 5
+    pst.pestpp_options["ies_num_reals"] = 10
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
-    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["ies_lambda_mults"] = [1.0,0.5]
     pst.pestpp_options["lambda_scale_fac"] = 1.0
-    pst.pestpp_options["ies_subset_size"] = 11
+    pst.pestpp_options["ies_subset_size"] = 3
     pst.pestpp_options["ies_par_en"] = "par_local.csv"
     pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options["ies_num_threads"] = 3
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
     #pst.pestpp_options["ies_verbose_level"] = 3
     pst.control_data.noptmax = 1
 
