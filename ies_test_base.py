@@ -325,8 +325,6 @@ def tenpar_localize_with_drop_test():
     template_d = os.path.join(model_d, "test_template")
     if not os.path.exists(template_d):
         raise Exception("template_d {0} not found".format(template_d))
-    if os.path.exists(test_d):
-        shutil.rmtree(test_d)
     # shutil.copytree(template_d, test_d)
     pst_name = os.path.join(template_d, "pest.pst")
     pst = pyemu.Pst(pst_name)
@@ -437,7 +435,7 @@ def tenpar_localize_with_drop_test():
     pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.jcb"
 
     pst.write(pst_name)
-     test_d = os.path.join(model_d, "master_localize_with_drop_test_binary_restart")
+    test_d = os.path.join(model_d, "master_localize_with_drop_test_binary_restart")
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=5,
                                 master_dir=test_d, verbose=True, worker_root=model_d,
                                 port=port)
