@@ -319,7 +319,9 @@ def rebase(model_d):
 
 
 def tenpar_localize_with_drop_test():
-    """tenpar local 1"""
+    """tenpar localizer with drop testing
+
+    """
     model_d = "ies_10par_xsec"
     
     template_d = os.path.join(model_d, "test_template")
@@ -332,15 +334,15 @@ def tenpar_localize_with_drop_test():
     borked_obs = pst.nnz_obs_names[1::2]
     locd_pars = pst.adj_par_names[1::2]
     pst.observation_data.loc[borked_obs,"obsval"] = 1.0e+10
-    print(borked_obs)
-    print(locd_pars)
+    print(borked_obs,flush=True)
+    print(locd_pars,flush=True)
     
     # mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
     mat = pyemu.Matrix.from_names(pst.nnz_obs_names, pst.adj_par_names).to_dataframe()
     mat.loc[:,:] = 0.0
     for i in range(mat.shape[0]):
         mat.iloc[i, i] = 1.0
-    print(mat)
+    print(mat,flush=True)
   
     # mat.iloc[0,:] = 1
     mat = pyemu.Matrix.from_dataframe(mat)
@@ -355,7 +357,8 @@ def tenpar_localize_with_drop_test():
     for i in oe.index:
         oe.loc[i,:] = pst.observation_data.loc[oe.columns,"obsval"]
     oe.to_csv(os.path.join(template_d, "obs_local.csv"))
-
+    print(pe,flush=True)
+    print(oe,flush=True)
     pst.pestpp_options = {}
     pst.pestpp_options["ies_num_reals"] = 20
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
@@ -384,9 +387,9 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)),index_col=0)
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
 
 
@@ -397,9 +400,9 @@ def tenpar_localize_with_drop_test():
                             os.path.join(template_d,"restart_obs.csv"))
     shutil.copy2(os.path.join(test_d,"pest_local_o.obs+noise.csv"),
                             os.path.join(template_d,"noise.csv"))
-    print(pd.read_csv(os.path.join(template_d,"restart_par.csv")))
-    print(pd.read_csv(os.path.join(template_d,"noise.csv")))
-    print(pd.read_csv(os.path.join(template_d,"restart_obs.csv")))
+    print(pd.read_csv(os.path.join(template_d,"restart_par.csv")),flush=True)
+    print(pd.read_csv(os.path.join(template_d,"noise.csv")),flush=True)
+    print(pd.read_csv(os.path.join(template_d,"restart_obs.csv")),flush=True)
 
 
     pst.pestpp_options["ies_par_en"] = "restart_par.csv"
@@ -416,9 +419,9 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)),index_col=0)
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
 
     pst.pestpp_options["ies_save_binary"] = True
@@ -438,9 +441,9 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)))
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
 
     shutil.copy2(os.path.join(test_d,"pest_local_o.{0}.par.jcb".format(pst.control_data.noptmax)),
@@ -463,9 +466,9 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)))
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
 
 
