@@ -347,15 +347,15 @@ def tenpar_localize_with_drop_test():
     mat.to_ascii(os.path.join(template_d, "localizer.mat"))
 
     cov = pyemu.Cov.from_parameter_data(pst)
-    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=20)
     pe.enforce()
     pe.to_csv(os.path.join(template_d, "par_local.csv"))
 
-    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=10)
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=20)
     oe.to_csv(os.path.join(template_d, "obs_local.csv"))
 
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_num_reals"] = 20
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
     pst.pestpp_options["ies_lambda_mults"] = [0.5,1.0,10.0]
     pst.pestpp_options["lambda_scale_fac"] = [0.5,1.0]
@@ -453,7 +453,7 @@ if __name__ == "__main__":
     #compare_suite("ies_10par_xsec")
     #compare_suite("ies_freyberg")
     #test_freyberg()
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     tenpar_localize_with_drop_test()
     #test_10par_xsec()
 
