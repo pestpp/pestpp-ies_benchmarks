@@ -319,7 +319,9 @@ def rebase(model_d):
 
 
 def tenpar_localize_with_drop_test():
-    """tenpar local 1"""
+    """tenpar localizer with drop testing
+
+    """
     model_d = "ies_10par_xsec"
     
     template_d = os.path.join(model_d, "test_template")
@@ -332,41 +334,44 @@ def tenpar_localize_with_drop_test():
     borked_obs = pst.nnz_obs_names[1::2]
     locd_pars = pst.adj_par_names[1::2]
     pst.observation_data.loc[borked_obs,"obsval"] = 1.0e+10
-    print(borked_obs)
-    print(locd_pars)
+    print(borked_obs,flush=True)
+    print(locd_pars,flush=True)
     
     # mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
     mat = pyemu.Matrix.from_names(pst.nnz_obs_names, pst.adj_par_names).to_dataframe()
     mat.loc[:,:] = 0.0
     for i in range(mat.shape[0]):
         mat.iloc[i, i] = 1.0
-    print(mat)
+    print(mat,flush=True)
   
     # mat.iloc[0,:] = 1
     mat = pyemu.Matrix.from_dataframe(mat)
     mat.to_ascii(os.path.join(template_d, "localizer.mat"))
 
     cov = pyemu.Cov.from_parameter_data(pst)
-    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=20)
     pe.enforce()
     pe.to_csv(os.path.join(template_d, "par_local.csv"))
 
-    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=10)
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=20)
+    for i in oe.index:
+        oe.loc[i,:] = pst.observation_data.loc[oe.columns,"obsval"]
     oe.to_csv(os.path.join(template_d, "obs_local.csv"))
-
+    print(pe,flush=True)
+    print(oe,flush=True)
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_num_reals"] = 20
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
     pst.pestpp_options["ies_lambda_mults"] = [0.5,1.0,10.0]
     pst.pestpp_options["lambda_scale_fac"] = [0.5,1.0]
     pst.pestpp_options["ies_subset_size"] = 3
     pst.pestpp_options["ies_par_en"] = "par_local.csv"
-    #pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
+    pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options["ies_num_threads"] = 3
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["ies_upgrades_in_memory"] = False
-    pst.pestpp_options["ies_no_noise"] = True
+    #pst.pestpp_options["ies_no_noise"] = True
     #pst.pestpp_options["ies_verbose_level"] = 3
     pst.control_data.noptmax = 2
 
@@ -374,7 +379,7 @@ def tenpar_localize_with_drop_test():
     pst_name = os.path.join(template_d, "pest_local_o.pst")
     pst.write(pst_name)
     test_d = os.path.join(model_d, "master_localize_with_drop_test_ascii")
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=5,
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
                                 master_dir=test_d, verbose=True, worker_root=model_d,
                                 port=port)
     pr_pe = pd.read_csv(os.path.join(test_d,"pest_local_o.0.par.csv"),index_col=0)
@@ -382,10 +387,12 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)),index_col=0)
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
+
+
 
     shutil.copy2(os.path.join(test_d,"pest_local_o.{0}.par.csv".format(pst.control_data.noptmax)),
                             os.path.join(template_d,"restart_par.csv"))
@@ -393,13 +400,18 @@ def tenpar_localize_with_drop_test():
                             os.path.join(template_d,"restart_obs.csv"))
     shutil.copy2(os.path.join(test_d,"pest_local_o.obs+noise.csv"),
                             os.path.join(template_d,"noise.csv"))
+    print(pd.read_csv(os.path.join(template_d,"restart_par.csv")),flush=True)
+    print(pd.read_csv(os.path.join(template_d,"noise.csv")),flush=True)
+    print(pd.read_csv(os.path.join(template_d,"restart_obs.csv")),flush=True)
+
+
     pst.pestpp_options["ies_par_en"] = "restart_par.csv"
     pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
     pst.pestpp_options["ies_obs_en"] = "noise.csv"
-    pst.pestpp_options.pop("ies_no_noise")
+    #pst.pestpp_options.pop("ies_no_noise")
     pst.write(pst_name)
     test_d = os.path.join(model_d, "master_localize_with_drop_test_ascii_restart")
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=5,
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
                                 master_dir=test_d, verbose=True, worker_root=model_d,
                                 port=port)
     pr_pe = pd.read_csv(os.path.join(test_d,"pest_local_o.0.par.csv"),index_col=0)
@@ -407,9 +419,9 @@ def tenpar_localize_with_drop_test():
                                      format(pst.control_data.noptmax)),index_col=0)
 
     d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
-    print(d)
-    print(d.sum())
-    print(d.sum().sum())
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
     assert d.sum().sum() < 1.0e-6
 
     pst.pestpp_options["ies_save_binary"] = True
@@ -420,9 +432,19 @@ def tenpar_localize_with_drop_test():
 
     pst.write(pst_name)
     test_d = os.path.join(model_d, "master_localize_with_drop_test_ascii_restart_save_binary")
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=5,
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
                                 master_dir=test_d, verbose=True, worker_root=model_d,
                                 port=port)
+
+    pr_pe = pyemu.ParameterEnsemble.from_binary(pst,os.path.join(test_d,"pest_local_o.0.par.jcb"))
+    pt_pe = pyemu.ParameterEnsemble.from_binary(pst,os.path.join(test_d,"pest_local_o.{0}.par.jcb".\
+                                     format(pst.control_data.noptmax)))
+
+    d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
+    assert d.sum().sum() < 1.0e-6
 
     shutil.copy2(os.path.join(test_d,"pest_local_o.{0}.par.jcb".format(pst.control_data.noptmax)),
                             os.path.join(template_d,"restart_par.jcb"))
@@ -436,9 +458,18 @@ def tenpar_localize_with_drop_test():
 
     pst.write(pst_name)
     test_d = os.path.join(model_d, "master_localize_with_drop_test_binary_restart")
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=5,
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
                                 master_dir=test_d, verbose=True, worker_root=model_d,
                                 port=port)
+    pr_pe = pyemu.ParameterEnsemble.from_binary(pst,os.path.join(test_d,"pest_local_o.0.par.jcb"))
+    pt_pe = pyemu.ParameterEnsemble.from_binary(pst,os.path.join(test_d,"pest_local_o.{0}.par.jcb".\
+                                     format(pst.control_data.noptmax)))
+
+    d = (pr_pe.loc[:,locd_pars] - pt_pe.loc[:,locd_pars]).apply(np.abs)
+    print(d,flush=True)
+    print(d.sum(),flush=True)
+    print(d.sum().sum(),flush=True)
+    assert d.sum().sum() < 1.0e-6
 
 
 if __name__ == "__main__":
@@ -453,7 +484,7 @@ if __name__ == "__main__":
     #compare_suite("ies_10par_xsec")
     #compare_suite("ies_freyberg")
     #test_freyberg()
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     tenpar_localize_with_drop_test()
     #test_10par_xsec()
 
