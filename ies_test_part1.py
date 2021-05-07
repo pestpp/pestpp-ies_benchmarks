@@ -1425,7 +1425,64 @@ def tenpar_localizer_test3():
     #assert diff.max().max() < 0.5
   
 
+def tenpar_restart_similar_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_similar_base")
+    template_d = os.path.join(model_d, "template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pst_name = os.path.join(test_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst,pyemu.Cov.from_parameter_data(pst),20)
+    pe = pe.loc[:,pst.par_names[::-1]]
+    pe.enforce()
+    pe.to_binary(os.path.join(test_d,"prior.jcb"))
+    pe.to_csv('org_test.csv')
+    #pst.pestpp_options = {}
+    #pst.pestpp_options["ies_par_en"] = "prior.jcb"
+    #pe = pyemu.ParameterEnsemble.from_binary(pst,os.path.join(template_d,"ies_prior.jcb"))
+    #pe = pe.loc[:,pst.par_names]
+    #pe.to_binary(os.path.join(test_d,"test_prior.jcb"))
+    pst.pestpp_options["ies_par_en"] = "prior.jcb"
+    pst.pestpp_options["ies_num_threads"] = 1
+    pst.pestpp_options["ies_num_reals"] = 5
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_verbose_level"] = 1
+    #pst.pestpp_options.pop("ies_localizer")
+    pst.pestpp_options["ies_autoadaloc"] = False
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(test_d,"pest.pst"))
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
 
+    phi1_df = pd.read_csv(os.path.join(test_d,"pest.phi.actual.csv"))
+
+    shutil.copy2(os.path.join(test_d,"pest.0.par.csv"),os.path.join(template_d,"par.csv"))
+    shutil.copy2(os.path.join(test_d,"pest.0.obs.csv"),os.path.join(template_d,"obs.csv"))
+    shutil.copy2(os.path.join(test_d,"pest.obs+noise.csv"),os.path.join(template_d,"noise.csv"))
+    pst.pestpp_options["ies_par_en"] = "par.csv"
+    pst.pestpp_options["ies_obs_en"] = "noise.csv"
+    pst.pestpp_options["ies_restart_obs_en"] = "obs.csv"
+    
+    
+    test_d = os.path.join(model_d, "master_similar_restart")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pst.write(os.path.join(test_d,"pest.pst"))
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    phi2_df = pd.read_csv(os.path.join(test_d, "pest.phi.actual.csv"))
+
+    d = (phi1_df.iloc[:,2:] - phi2_df.iloc[:,2:]).apply(np.abs)
+    print(d)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
 
 if __name__ == "__main__":
     
@@ -1433,8 +1490,9 @@ if __name__ == "__main__":
     # full list of tests
     #tenpar_subset_test()
     shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
-                 os.path.join("..", "bin", "pestpp-ies.exe"))
-
+                 os.path.join("..", "bin", "win","pestpp-ies.exe"))
+    #invest()
+    tenpar_restart_similar_test()
     #tenpar_fixed_test()
     # tenpar_full_cov_test()
     # eval_freyberg_full_cov_reorder()
@@ -1462,12 +1520,12 @@ if __name__ == "__main__":
     # tenpar_rns_test()
     # clues_longnames_test()
     # tenpar_localize_how_test()
-    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
-                 os.path.join("..", "bin", "win", "pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+    #             os.path.join("..", "bin", "win", "pestpp-ies.exe"))
 
     #import pyemu
     #m = pyemu.Matrix.from_binary(os.path.join("ies_10par_xsec","master_fixed","pest_fixed.0.par.jcb"))
-    tenpar_fixed_test()
+    #tenpar_fixed_test()
     #tenpar_incr_num_reals_test()
     #test_freyberg_ineq()
     #freyberg_dist_local_invest()

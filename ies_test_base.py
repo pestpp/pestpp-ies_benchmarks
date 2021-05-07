@@ -79,7 +79,7 @@ compare_files = ["pest.phi.actual.csv", "pest.phi.meas.csv", "pest.phi.regul.csv
                  "pest.{0}.par.csv".format(noptmax), "pest.{0}.obs.csv".format(noptmax),
                  "pest.{0}.par.csv".format(0), "pest.obs+noise.csv"]
 diff_tol = 1.0e-6
-port = 4016
+port = 4017
 num_reals = 10
 def write_empty_test_matrix():
     test_names = [t.split()[0] for t in tests.split('\n')]
