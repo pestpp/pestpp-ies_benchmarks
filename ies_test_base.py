@@ -472,8 +472,58 @@ def tenpar_localize_with_drop_test():
     assert d.sum().sum() < 1.0e-6
 
 
-if __name__ == "__main__":
+def tenpar_binary_nz_test():
+    model_d = "ies_10par_xsec" 
+    template_d = os.path.join(model_d, "test_template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    # shutil.copytree(template_d, test_d)
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
 
+    cov = pyemu.Cov.from_observation_data(pst)
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst,cov,100)
+    oe.to_csv(os.path.join(template_d,"noise.csv"))
+    pst.pestpp_options["ies_obs_en"] = "noise.csv"
+    pst.pestpp_options["ies_num_reals"] = 5
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(template_d,"pest_binary_nz.pst"))
+    pyemu.os_utils.run("{0} pest_binary_nz.pst".format(exe_path),cwd=template_d)
+    oe_out1 = pd.read_csv(os.path.join(template_d,"pest_binary_nz.0.obs.csv"),index_col=0)
+    noise_out1 = pd.read_csv(os.path.join(template_d,"pest_binary_nz.obs+noise.csv"),index_col=0)
+    assert oe_out1.shape[1] == pst.nobs
+    assert noise_out1.shape[1] == pst.nobs
+
+
+
+    oe.to_binary(os.path.join(template_d,"noise.jcb"))
+    pst.pestpp_options["ies_obs_en"] = "noise.jcb"
+    pst.pestpp_options["ies_num_reals"] = 5
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(template_d,"pest_binary_nz.pst"))
+    pyemu.os_utils.run("{0} pest_binary_nz.pst".format(exe_path),cwd=template_d)
+    oe_out2 = pd.read_csv(os.path.join(template_d,"pest_binary_nz.0.obs.csv"),index_col=0)
+    noise_out2 = pd.read_csv(os.path.join(template_d,"pest_binary_nz.obs+noise.csv"),index_col=0)
+    assert oe_out2.shape[1] == pst.nobs
+    assert noise_out2.shape[1] == pst.nobs
+
+    d = (oe_out1 - oe_out2).apply(np.abs)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
+
+    d = (noise_out1 - noise_out2).apply(np.abs)
+    print(d.max())
+    print(d.max().max())
+    assert d.max().max() < 1.0e-6
+
+
+
+
+if __name__ == "__main__":
+	shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+ 
+	tenpar_binary_nz_test()
     #setup_suite_dir("ies_10par_xsec")
     #setup_suite_dir("ies_freyberg")
     #run_suite("ies_10par_xsec")
@@ -485,7 +535,7 @@ if __name__ == "__main__":
     #compare_suite("ies_freyberg")
     #test_freyberg()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    tenpar_localize_with_drop_test()
+    #tenpar_localize_with_drop_test()
     #test_10par_xsec()
 
     
