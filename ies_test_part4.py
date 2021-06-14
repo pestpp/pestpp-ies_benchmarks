@@ -47,7 +47,7 @@ ies_vars = ["ies_par_en", "ies_obs_en", "ies_restart_obs_en",
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"linux")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"mac")
 else:
     bin_path = os.path.join(bin_path,"win")
@@ -64,7 +64,7 @@ else:
         
 if "windows" in platform.platform().lower():
     exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
     exe_path = os.path.join(bin_path, "linux", "pestpp-ies")
@@ -1090,7 +1090,73 @@ def tenpar_upgrade_on_disk_test():
 
 
     
+def multimodal_test():
+    model_d = "mm1"
+    test_d = os.path.join(model_d,"template")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    os.makedirs(test_d)
+    tpl_file = os.path.join(test_d,"par.dat.tpl")
+    with open(tpl_file,'w') as f:
+        f.write("ptf ~\n")
+        f.write("par1  ~   par1   ~\n")
+        f.write("par2  ~   par2   ~\n")
+    ins_file = os.path.join(test_d,"obs.dat.ins") 
+    with open(ins_file,'w') as f:
+        f.write("pif ~\n")
+        f.write("l1 !obs1!\n")
+    with open(os.path.join(test_d,"run.py"),'w') as f:
+        f.write("lines =  open('par.dat','r').readlines()\n")
+        f.write("result = float(lines[0].strip().split()[-1])**2 + float(lines[1].strip().split()[-1])**2\n")
+        f.write("with open('obs.dat','w') as f:\n")
+        f.write("    f.write('{0:15.6E}'.format(result))\n")
+    pst = pyemu.Pst.from_io_files(tpl_file,tpl_file.replace(".tpl",""),ins_file,ins_file.replace(".ins",""),pst_path=".")
+    pst.model_command = "python run.py" 
+    pst.parameter_data.loc[:,"partrans"] = "none"
+    pst.parameter_data.loc[:,"parval1"] = 0
+    pst.parameter_data.loc[:,"parubnd"] = 2
+    pst.parameter_data.loc[:,"parlbnd"] = -2
+    pst.parameter_data.loc[:,"parchglim"] = "relative"
+    pst.observation_data.loc[:,"obsval"] = 1
+    pst.observation_data.loc[:,"weight"] = 10.0
+
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(test_d,"mm1.pst"))
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=test_d)
+    pst.control_data.noptmax = 6
+    pst.pestpp_options["ies_num_reals"] = 200
+    #pst.pestpp_options["ies_lambda_mults"] = 1.0
+    #pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_subset_size"] = 25
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.1
+    pst.write(os.path.join(test_d,"mm1.pst"))
+    m_d = os.path.join(model_d,"master_mm")
+    pyemu.os_utils.start_workers(test_d,exe_path,"mm1.pst",worker_root=model_d,num_workers=25,master_dir=m_d)
+
+    pst.pestpp_options["ies_multimodal_alpha"] = 1.0
+    pst.write(os.path.join(test_d,"mm1.pst"))
+    m_d = os.path.join(model_d,"master_base")
+    pyemu.os_utils.start_workers(test_d,exe_path,"mm1.pst",worker_root=model_d,num_workers=25,master_dir=m_d)
+
    
+def plot_mm1_results():
+    base_d = os.path.join("mm1","master_base")
+    mm_d = os.path.join("mm1","master_mm")
+    pst = pyemu.Pst(os.path.join(base_d,"mm1.pst"))
+    pe_pt_base = pd.read_csv(os.path.join(base_d,"mm1.{0}.par.csv".format(pst.control_data.noptmax)))
+    pe_pt_mm = pd.read_csv(os.path.join(mm_d,"mm1.{0}.par.csv".format(pst.control_data.noptmax)))
+    pe_pr = pd.read_csv(os.path.join(base_d,"mm1.0.par.csv"))
+
+    import matplotlib.pyplot as plt
+    fig,axes = plt.subplots(1,2,figsize=(10,5))
+    axes[0].scatter(pe_pr.par1.values,pe_pr.par2.values,marker=".",color="0.5",alpha=0.5)
+    axes[0].scatter(pe_pt_base.par1.values,pe_pt_base.par2.values,marker=".",color="b",alpha=0.5)
+    axes[1].scatter(pe_pr.par1.values,pe_pr.par2.values,marker=".",color="0.5",alpha=0.5)
+    axes[1].scatter(pe_pt_mm.par1.values,pe_pt_mm.par2.values,marker=".",color="b",alpha=0.5)
+    
+    plt.show()
+
+
 if __name__ == "__main__":
     #tenpar_base_run_test()
     #tenpar_base_par_file_test()
@@ -1113,9 +1179,11 @@ if __name__ == "__main__":
     #freyberg_center_on_test()
     #freyberg_pdc_test()
     #freyberg_rcov_test()
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
     #tenpar_align_test()
     #tenpar_align_test_2()
     #tenpar_covloc_test()
-    tenpar_upgrade_on_disk_test()
+    #tenpar_upgrade_on_disk_test()
+    multimodal_test()
+    plot_mm1_results()

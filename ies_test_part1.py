@@ -12,7 +12,7 @@ import pyemu
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"linux")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"mac")
 else:
     bin_path = os.path.join(bin_path,"win")
@@ -22,6 +22,7 @@ os.environ["PATH"] += os.pathsep + bin_path
 
 
 # case of either appveyor, travis or local
+print(platform.platform().lower())
 if os.path.exists(os.path.join("pestpp","bin")):
     bin_path = os.path.join("..","..","pestpp","bin")
 else:
@@ -29,7 +30,7 @@ else:
     
 if "windows" in platform.platform().lower():
     exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
     exe_path = os.path.join(bin_path, "linux", "pestpp-ies")
@@ -1489,10 +1490,11 @@ if __name__ == "__main__":
 
     # full list of tests
     #tenpar_subset_test()
-    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
-                 os.path.join("..", "bin", "win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+    #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
     #invest()
-    tenpar_restart_similar_test()
+    tenpar_narrow_range_test()
+    #tenpar_restart_similar_test()
     #tenpar_fixed_test()
     # tenpar_full_cov_test()
     # eval_freyberg_full_cov_reorder()
