@@ -1284,6 +1284,67 @@ def mm_invest():
 
 
 
+def zdt1_weight_test():
+    model_d = "zdt1"
+    t_d = os.path.join(model_d,"zdt1_template")
+    pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
+    num_reals = 100
+    pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=num_reals)
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst,pyemu.Cov.from_observation_data(pst),num_reals=num_reals)
+    for oname in pst.obs_names:
+        oe.loc[:,oname] = 0.0
+        pst.observation_data.loc[oname,"obgnme"] = oname # remove the ineq tag
+        pst.observation_data.loc[oname, "obsval"] = 0.0  # remove the ineq tag
+
+    weights = oe.copy()
+    wseq = np.linspace(0.05,20,num_reals)
+    weights.iloc[:,0] = wseq
+    weights.iloc[:,1] = np.flipud(wseq)
+    #print(weights)
+    pst.pestpp_options = {}
+    pst.pestpp_options["ies_par_en"] = "par.csv"
+    pe.to_csv(os.path.join(t_d,"par.csv"))
+    pst.pestpp_options["ies_obs_en"] = "obs.csv"
+    oe.to_csv(os.path.join(t_d, "obs.csv"))
+
+    pst.control_data.noptmax = 5
+    pst.write(os.path.join(t_d,"zdt1_ies.pst"))
+    m_d = os.path.join(model_d,"zdt1_master1_base")
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d)
+
+    pst.pestpp_options["ies_weights_en"] = "weights.csv"
+    pst.pestpp_options["ies_multimodal_alpha"] = .90
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["panther_agent_freeze_on_fail"] = True
+    pst.pestpp_options["ies_subset_size"] = num_reals
+    weights.to_csv(os.path.join(t_d, "weights.csv"))
+    pst.write(os.path.join(t_d, "zdt1_ies.pst"))
+    m_d = os.path.join(model_d, "zdt1_master1")
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1_ies.pst", num_workers=30, worker_root=model_d, verbose=True,
+                                 master_dir=m_d)
+    oe_file = os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(pst.control_data.noptmax))
+    assert os.path.exists(oe_file)
+
+def plot_zdt1_results(noptmax=None):
+    m_d = os.path.join("zdt1","zdt1_master1")
+    pst = pyemu.Pst(os.path.join(m_d,"zdt1_ies.pst"))
+    if noptmax is None:
+        noptmax = pst.control_data.noptmax
+    oe_pr = pd.read_csv(os.path.join(m_d,"zdt1_ies.0.obs.csv"),index_col=0)
+    oe_pt_base = pd.read_csv(os.path.join(m_d+"_base","zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
+    oe_pt = pd.read_csv(os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
+    import matplotlib.pyplot as plt
+    fig,ax = plt.subplots(1,1,figsize=(10,10))
+
+    ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", label="prior")
+    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="mm posterior with weight en")
+    ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard form posterior")
+    ax.legend(loc="upper right")
+    ax.set_title("zdt1",loc="left")
+    plt.show()
+
+
 if __name__ == "__main__":
     # tenpar_base_run_test()
     # tenpar_base_par_file_test()
@@ -1312,7 +1373,9 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     # tenpar_upgrade_on_disk_test()
-    multimodal_test()
+    #multimodal_test()
     #mm_invest()
-    plot_mm1_results(4, func="h", show_info=False)
+    #plot_mm1_results(4, func="h", show_info=False)
     #mm_invest()
+    zdt1_weight_test()
+    plot_zdt1_results(5)
