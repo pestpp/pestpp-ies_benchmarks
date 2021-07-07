@@ -1307,7 +1307,7 @@ def zdt1_weight_test():
     pst.pestpp_options["ies_obs_en"] = "obs.csv"
     oe.to_csv(os.path.join(t_d, "obs.csv"))
 
-    pst.control_data.noptmax = 5
+    pst.control_data.noptmax = 10
     pst.write(os.path.join(t_d,"zdt1_ies.pst"))
     m_d = os.path.join(model_d,"zdt1_master1_base")
     #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d)
@@ -1341,8 +1341,8 @@ def plot_zdt1_results(noptmax=None):
     ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="mm posterior with weight en")
     ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard form posterior")
     ax.legend(loc="upper right")
-    ax.set_title("zdt1",loc="left")
-    plt.show()
+    ax.set_title("bi-objective zdt1 optimization benchmark",loc="left")
+    plt.savefig(os.path.join(m_d,"compare_{0}.pdf".format(noptmax)))
 
 
 if __name__ == "__main__":
@@ -1377,5 +1377,5 @@ if __name__ == "__main__":
     #mm_invest()
     #plot_mm1_results(4, func="h", show_info=False)
     #mm_invest()
-    zdt1_weight_test()
-    plot_zdt1_results(5)
+    #zdt1_weight_test()
+    plot_zdt1_results(10)
