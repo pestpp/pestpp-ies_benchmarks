@@ -1076,9 +1076,9 @@ def tenpar_upgrade_on_disk_test():
 
 def multimodal_test():
     noptmax = 4
-    num_reals = 50
+    num_reals = 100
     # can be "circle" or "h"
-    func = "h"
+    func = "circle"
     model_d = "mm1"
     test_d = os.path.join(model_d, "template")
     if os.path.exists(test_d):
@@ -1146,10 +1146,10 @@ def multimodal_test():
     m_d = os.path.join(model_d, "master_mm_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
 
-    # pst.pestpp_options["ies_multimodal_alpha"] = 1.0
-    # pst.write(os.path.join(test_d, "mm1.pst"))
-    # m_d = os.path.join(model_d, "master_base_{0}".format(func))
-    # pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    pst.pestpp_options["ies_multimodal_alpha"] = 1.0
+    pst.write(os.path.join(test_d, "mm1.pst"))
+    m_d = os.path.join(model_d, "master_base_{0}".format(func))
+    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
 
 def plot_mm1_results(noptmax=None, func="circle", show_info=False):
     import matplotlib.pyplot as plt
@@ -1208,7 +1208,7 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
 
         axes[1].scatter(pe_pr.par1.values, pe_pr.par2.values, marker=".", color="0.5", alpha=0.5)
         if noptmax != 0:
-            axes[1].scatter(pe_pt_mm.par1.values, pe_pt_mm.par2.values, marker=".", c="k", alpha=0.75)
+            axes[1].scatter(pe_pt_mm.par1.values, pe_pt_mm.par2.values, marker=".", c="b", alpha=0.75)
         if show_info and noptmax > 0:
             axes[1].scatter(pe_pr_nei.par1.values, pe_pr_nei.par2.values, marker=".", color="c", s=100)
             #for rname, p1, p2 in zip(pe_pr_nei.index, pe_pr_nei.par1.values, pe_pr_nei.par2.values):
@@ -1225,7 +1225,7 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
 
         axes[0].scatter(pe_pr.par1.values, pe_pr.par2.values, marker=".", color="0.5", alpha=0.5)
         if noptmax != 0:
-            axes[0].scatter(pe_pt_base.par1.values, pe_pt_base.par2.values, marker=".", c="k", alpha=0.5)
+            axes[0].scatter(pe_pt_base.par1.values, pe_pt_base.par2.values, marker=".", c="b", alpha=0.5)
 
         axes[0].set_title("unimodal upgrade")
         axes[0].set_ylabel("par2")
@@ -1255,7 +1255,7 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
     pyemu.os_utils.run("ffmpeg -i compare_00.png -vf palettegen=16 -y palette.png",
                        cwd=mm_d)
     cmd = "ffmpeg -i compare_%02d.png -i palette.png -y -filter_complex "
-    cmd += "\"fps=100,scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" -y  -final_delay 150 compare.gif"
+    cmd += "\"fps=10,scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" -y  -final_delay 150 compare.gif"
     pyemu.os_utils.run(cmd, cwd=mm_d)
 
 
@@ -1373,9 +1373,9 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     # tenpar_upgrade_on_disk_test()
-    #multimodal_test()
+    multimodal_test()
     #mm_invest()
-    #plot_mm1_results(4, func="h", show_info=False)
+    plot_mm1_results(4, func="circle", show_info=False)
     #mm_invest()
     #zdt1_weight_test()
-    plot_zdt1_results(10)
+    #plot_zdt1_results(10)

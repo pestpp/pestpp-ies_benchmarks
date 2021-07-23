@@ -1418,11 +1418,11 @@ def tenpar_localizer_test3():
         diff = par_df1.loc[:, par] - par_df2.loc[:, par]
         print(diff)
         print(diff.sum())
-        diff = par_df1.loc[:, par] - pe.loc[:, par]
+        diff = (par_df1.loc[:, par] - pe.loc[:, par]).apply(np.abs)
         print(diff.sum())
-        #assert diff.sum() == 0.0
+        #assert diff.max() < 1e-4
     diff = np.abs(phi_df1.loc[:,"mean"] - phi_df2.loc[:,"mean"])
-    print(diff.max().max())
+    print(diff.max()
     #assert diff.max().max() < 0.5
   
 
@@ -1493,7 +1493,7 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
     #invest()
-    tenpar_narrow_range_test()
+    #tenpar_narrow_range_test()
     #tenpar_restart_similar_test()
     #tenpar_fixed_test()
     # tenpar_full_cov_test()
@@ -1524,7 +1524,7 @@ if __name__ == "__main__":
     # tenpar_localize_how_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win", "pestpp-ies.exe"))
-
+    tenpar_localizer_test3()
     #import pyemu
     #m = pyemu.Matrix.from_binary(os.path.join("ies_10par_xsec","master_fixed","pest_fixed.0.par.jcb"))
     #tenpar_fixed_test()
