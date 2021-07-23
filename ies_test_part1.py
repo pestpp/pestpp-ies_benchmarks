@@ -1422,7 +1422,7 @@ def tenpar_localizer_test3():
         print(diff.sum())
         #assert diff.max() < 1e-4
     diff = np.abs(phi_df1.loc[:,"mean"] - phi_df2.loc[:,"mean"])
-    print(diff.max()
+    print(diff.max())
     #assert diff.max().max() < 0.5
   
 
