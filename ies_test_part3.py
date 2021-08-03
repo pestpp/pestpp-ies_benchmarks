@@ -46,7 +46,7 @@ ies_vars = ["ies_par_en", "ies_obs_en", "ies_restart_obs_en",
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"linux")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"mac")
 else:
     bin_path = os.path.join(bin_path,"win")
@@ -63,7 +63,7 @@ else:
         
 if "windows" in platform.platform().lower():
     exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
     exe_path = os.path.join(bin_path, "linux", "pestpp-ies")
@@ -710,6 +710,7 @@ def tenpar_tied_test():
     pst.pestpp_options["lambda_scale_fac"] = 1.0
     #pst.pestpp_options["ies_subset_size"] = 11
     pst.pestpp_options["ies_save_binary"] = True
+    
     #pst.pestpp_options["ies_verbose_level"] = 3
     pst.control_data.noptmax = 1
 
@@ -727,7 +728,7 @@ def tenpar_tied_test():
     print(pst.par_names)
     assert list(pe.columns) == pst.par_names
 
-    pe.loc[:,tnames].sum() == par.loc[tnames,"parval1"]
+    assert pe.loc[:,tnames].sum() == par.loc[tnames,"parval1"]
 
 
 def tenpar_by_vars_test():
@@ -756,6 +757,7 @@ def tenpar_by_vars_test():
     #pst.pestpp_options["ies_subset_size"] = 11
     pst.pestpp_options["ies_save_binary"] = False
     pst.pestpp_options["ies_csv_by_reals"] = True
+    pst.pestpp_options["ensemble_output_precision"] = 12
     #pst.pestpp_options["ies_verbose_level"] = 3
     pst.control_data.noptmax = 2
 
@@ -785,6 +787,10 @@ def tenpar_by_vars_test():
     shutil.copy2(os.path.join(test_d, "pest_vars.obs+noise.csv"), os.path.join(template_d, "restart_by_vars.obs.csv"))
     pst.pestpp_options['ies_par_en'] = "restart_by_vars.par.csv"
     pst.pestpp_options['ies_obs_en'] = "restart_by_vars.obs.csv"
+    df = pd.read_csv(os.path.join(template_d,"restart_by_vars.par.csv"),index_col=0)
+    fval = 2.50000012345
+    df.loc[fnames,:] = fval
+    df.to_csv(os.path.join(template_d,"restart_by_vars.par.csv"))
     pst.write(pst_name)
     test_d = os.path.join(model_d, "master_vars_test1")
     if os.path.exists(test_d):
@@ -797,6 +803,11 @@ def tenpar_by_vars_test():
     diff = pe2 - pe1
     print(diff.apply(np.abs).max())
     assert diff.apply(np.abs).max().max() < 1.0e-3
+    with pd.option_context('display.precision', 12):
+        print(pe2.loc[:,fnames])
+        d = 1000000. * np.abs(pe2.loc[:,fnames] - fval) / fval
+        print(d)
+    assert d.max().max() == 0.0,d.max()
 
 def tenpar_xsec_autoadaloc_test():
     """testing the CC calculations made by autoadaloc"""
@@ -886,12 +897,12 @@ if __name__ == "__main__":
     #tenpar_xsec_autoadaloc_test()
     #tenpar_xsec_combined_autoadaloc_test()
     #tenpar_xsec_aal_sigma_dist_test()
-    shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
-                 os.path.join("..", "bin", "win","pestpp-ies.exe"))
-    #tenpar_by_vars_test()
+    #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
+    #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
+    tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
-    tenpar_localize_how_test()
+    #tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
-    tenpar_tied_test()
+    #tenpar_tied_test()

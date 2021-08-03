@@ -46,7 +46,7 @@ ies_vars = ["ies_par_en", "ies_obs_en", "ies_restart_obs_en",
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"linux")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"mac")
 else:
     bin_path = os.path.join(bin_path,"win")
@@ -64,7 +64,7 @@ else:
   
 if "windows" in platform.platform().lower():
     exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
     exe_path = os.path.join(bin_path, "linux", "pestpp-ies")
@@ -521,9 +521,9 @@ def tenpar_binary_nz_test():
 
 
 if __name__ == "__main__":
-	shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
  
-	tenpar_binary_nz_test()
+	#tenpar_binary_nz_test()
     #setup_suite_dir("ies_10par_xsec")
     #setup_suite_dir("ies_freyberg")
     #run_suite("ies_10par_xsec")
@@ -536,6 +536,6 @@ if __name__ == "__main__":
     #test_freyberg()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #tenpar_localize_with_drop_test()
-    #test_10par_xsec()
+    test_10par_xsec()
 
     
