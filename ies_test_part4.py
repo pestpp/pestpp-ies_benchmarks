@@ -370,15 +370,15 @@ def freyberg_combined_aal_test():
     par_adj = par.loc[pst.adj_par_names, :].copy()
     par_adj.loc[:, "i"] = par_adj.parnme.apply(lambda x: int(x.split('_')[1][1:]))
     par_adj.loc[:, "j"] = par_adj.parnme.apply(lambda x: int(x.split('_')[2][1:]))
-    par_adj.loc[:, "x"] = par_adj.apply(lambda x: m.sr.xcentergrid[x.i, x.j], axis=1)
-    par_adj.loc[:, "y"] = par_adj.apply(lambda x: m.sr.ycentergrid[x.i, x.j], axis=1)
+    par_adj.loc[:, "x"] = par_adj.apply(lambda x: m.modelgrid.xcellcenters[x.i, x.j], axis=1)
+    par_adj.loc[:, "y"] = par_adj.apply(lambda x: m.modelgrid.ycellcenters[x.i, x.j], axis=1)
 
     pst.observation_data.loc["flx_river_l_19700102", "weight"] = 0.0
     obs_nz = pst.observation_data.loc[pst.nnz_obs_names, :].copy()
     obs_nz.loc[:, "i"] = obs_nz.obsnme.apply(lambda x: int(x[6:8]))
     obs_nz.loc[:, "j"] = obs_nz.obsnme.apply(lambda x: int(x[9:11]))
-    obs_nz.loc[:, 'x'] = obs_nz.apply(lambda x: m.sr.xcentergrid[x.i, x.j], axis=1)
-    obs_nz.loc[:, 'y'] = obs_nz.apply(lambda x: m.sr.ycentergrid[x.i, x.j], axis=1)
+    obs_nz.loc[:, 'x'] = obs_nz.apply(lambda x: m.modelgrid.xcellcenters[x.i, x.j], axis=1)
+    obs_nz.loc[:, 'y'] = obs_nz.apply(lambda x: m.modelgrid.ycellcenters[x.i, x.j], axis=1)
 
     dfs = []
     v = pyemu.geostats.ExpVario(contribution=1.0, a=1000)
@@ -504,16 +504,16 @@ def freyberg_aal_invest():
             arr_cc2 = arr_cc2 / arr_cc2.max()
             arr_cc = np.ma.masked_where(arr_cc < 1.0e-6, arr_cc)
             arr_jco = np.ma.masked_where(arr_jco < 1.0e-6, arr_jco)
-            c = ax.pcolormesh(m.sr.xcentergrid, m.sr.ycentergrid, arr_cc2, alpha=0.5, vmin=0, vmax=1)
+            c = ax.pcolormesh(m.modelgrid.xcellcenters, m.modelgrid.ycellcenters, arr_cc2, alpha=0.5, vmin=0, vmax=1)
             # plt.colorbar(c,ax=ax)
-            c1 = ax2.pcolormesh(m.sr.xcentergrid, m.sr.ycentergrid, arr_cc, alpha=0.5, vmin=0, vmax=1)
-            c2 = ax3.pcolormesh(m.sr.xcentergrid, m.sr.ycentergrid, arr_jco, alpha=0.5, vmin=0, vmax=1)
+            c1 = ax2.pcolormesh(m.modelgrid.xcellcenters, m.modelgrid.ycellcenters, arr_cc, alpha=0.5, vmin=0, vmax=1)
+            c2 = ax3.pcolormesh(m.modelgrid.xcellcenters, m.modelgrid.ycellcenters, arr_jco, alpha=0.5, vmin=0, vmax=1)
 
             # plt.colorbar(c2,ax=ax2,fraction=0.046, pad=0.04)
             if i is not None:
-                ax.scatter([m.sr.xcentergrid[i, j]], [m.sr.ycentergrid[i, j]], marker='.', s=50)
-                ax2.scatter([m.sr.xcentergrid[i, j]], [m.sr.ycentergrid[i, j]], marker='.', s=50)
-                ax3.scatter([m.sr.xcentergrid[i, j]], [m.sr.ycentergrid[i, j]], marker='.', s=50)
+                ax.scatter([m.modelgrid.xcellcenters[i, j]], [m.modelgrid.ycellcenters[i, j]], marker='.', s=50)
+                ax2.scatter([m.modelgrid.xcellcenters[i, j]], [m.modelgrid.ycellcenters[i, j]], marker='.', s=50)
+                ax3.scatter([m.modelgrid.xcellcenters[i, j]], [m.modelgrid.ycellcenters[i, j]], marker='.', s=50)
 
             ax.set_title("A.) estimated CC".format(obs), fontsize=12, loc="left")
             ax2.set_title("B.) distance loc + estimated CC".format(obs), fontsize=12, loc="left")
