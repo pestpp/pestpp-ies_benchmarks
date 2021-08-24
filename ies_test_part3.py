@@ -194,15 +194,15 @@ def freyberg_dist_local_test():
     par_adj = par.loc[pst.adj_par_names,:].copy()
     par_adj.loc[:,"i"] = par_adj.parnme.apply(lambda x: int(x.split('_')[1][1:]))
     par_adj.loc[:,"j"] = par_adj.parnme.apply(lambda x: int(x.split('_')[2][1:]))
-    par_adj.loc[:,"x"] = par_adj.apply(lambda x: m.sr.xcentergrid[x.i,x.j],axis=1)
-    par_adj.loc[:,"y"] = par_adj.apply(lambda x: m.sr.ycentergrid[x.i,x.j],axis=1)
+    par_adj.loc[:,"x"] = par_adj.apply(lambda x: m.modelgrid.xcellcenters[x.i,x.j],axis=1)
+    par_adj.loc[:,"y"] = par_adj.apply(lambda x: m.modelgrid.ycellcenters[x.i,x.j],axis=1)
 
     pst.observation_data.loc["flx_river_l_19700102","weight"] = 0.0
     obs_nz = pst.observation_data.loc[pst.nnz_obs_names,:].copy()
     obs_nz.loc[:,"i"] = obs_nz.obsnme.apply(lambda x: int(x[6:8]))
     obs_nz.loc[:,"j"] = obs_nz.obsnme.apply(lambda x: int(x[9:11]))
-    obs_nz.loc[:,'x'] = obs_nz.apply(lambda x: m.sr.xcentergrid[x.i,x.j],axis=1)
-    obs_nz.loc[:,'y'] = obs_nz.apply(lambda x: m.sr.ycentergrid[x.i,x.j],axis=1)
+    obs_nz.loc[:,'x'] = obs_nz.apply(lambda x: m.modelgrid.xcellcenters[x.i,x.j],axis=1)
+    obs_nz.loc[:,'y'] = obs_nz.apply(lambda x: m.modelgrid.ycellcenters[x.i,x.j],axis=1)
 
     dfs = []
     v = pyemu.geostats.ExpVario(contribution=1.0, a=1000)
@@ -299,15 +299,15 @@ def freyberg_dist_local_invest():
     par_adj = par.loc[pst.adj_par_names, :].copy()
     par_adj.loc[:, "i"] = par_adj.parnme.apply(lambda x: int(x.split('_')[1][1:]))
     par_adj.loc[:, "j"] = par_adj.parnme.apply(lambda x: int(x.split('_')[2][1:]))
-    par_adj.loc[:, "x"] = par_adj.apply(lambda x: m.sr.xcentergrid[x.i, x.j], axis=1)
-    par_adj.loc[:, "y"] = par_adj.apply(lambda x: m.sr.ycentergrid[x.i, x.j], axis=1)
+    par_adj.loc[:, "x"] = par_adj.apply(lambda x: m.modelgrid.xcellcenters[x.i, x.j], axis=1)
+    par_adj.loc[:, "y"] = par_adj.apply(lambda x: m.modelgrid.ycellcenters[x.i, x.j], axis=1)
 
     pst.observation_data.loc["flx_river_l_19700102", "weight"] = 0.0
     obs_nz = pst.observation_data.loc[pst.nnz_obs_names, :].copy()
     obs_nz.loc[:, "i"] = obs_nz.obsnme.apply(lambda x: int(x[6:8])-1)
     obs_nz.loc[:, "j"] = obs_nz.obsnme.apply(lambda x: int(x[9:11])-1)
-    obs_nz.loc[:, 'x'] = obs_nz.apply(lambda x: m.sr.xcentergrid[x.i, x.j], axis=1)
-    obs_nz.loc[:, 'y'] = obs_nz.apply(lambda x: m.sr.ycentergrid[x.i, x.j], axis=1)
+    obs_nz.loc[:, 'x'] = obs_nz.apply(lambda x: m.modelgrid.xcellcenters[x.i, x.j], axis=1)
+    obs_nz.loc[:, 'y'] = obs_nz.apply(lambda x: m.modelgrid.ycellcenters[x.i, x.j], axis=1)
 
     dfs = []
     v = pyemu.geostats.ExpVario(contribution=1.0, a=1000)
@@ -570,15 +570,15 @@ def freyberg_local_threads_test():
     par_adj = par.loc[pst.adj_par_names,:].copy()
     par_adj.loc[:,"i"] = par_adj.parnme.apply(lambda x: int(x.split('_')[1][1:]))
     par_adj.loc[:,"j"] = par_adj.parnme.apply(lambda x: int(x.split('_')[2][1:]))
-    par_adj.loc[:,"x"] = par_adj.apply(lambda x: m.sr.xcentergrid[x.i,x.j],axis=1)
-    par_adj.loc[:,"y"] = par_adj.apply(lambda x: m.sr.ycentergrid[x.i,x.j],axis=1)
+    par_adj.loc[:,"x"] = par_adj.apply(lambda x: m.modelgrid.xcellcenters[x.i,x.j],axis=1)
+    par_adj.loc[:,"y"] = par_adj.apply(lambda x: m.modelgrid.ycellcenters[x.i,x.j],axis=1)
 
     pst.observation_data.loc["flx_river_l_19700102","weight"] = 0.0
     obs_nz = pst.observation_data.loc[pst.nnz_obs_names,:].copy()
     obs_nz.loc[:,"i"] = obs_nz.obsnme.apply(lambda x: int(x[6:8]))
     obs_nz.loc[:,"j"] = obs_nz.obsnme.apply(lambda x: int(x[9:11]))
-    obs_nz.loc[:,'x'] = obs_nz.apply(lambda x: m.sr.xcentergrid[x.i,x.j],axis=1)
-    obs_nz.loc[:,'y'] = obs_nz.apply(lambda x: m.sr.ycentergrid[x.i,x.j],axis=1)
+    obs_nz.loc[:,'x'] = obs_nz.apply(lambda x: m.modelgrid.xcellcenters[x.i,x.j],axis=1)
+    obs_nz.loc[:,'y'] = obs_nz.apply(lambda x: m.modelgrid.ycellcenters[x.i,x.j],axis=1)
 
     dfs = []
     v = pyemu.geostats.ExpVario(contribution=1.0, a=1000)
@@ -905,4 +905,5 @@ if __name__ == "__main__":
     #tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
-    tenpar_tied_test()
+    #tenpar_tied_test()
+    freyberg_dist_local_test()
