@@ -697,11 +697,12 @@ def tenpar_tied_test():
     # shutil.copytree(template_d, test_d)
     pst_name = os.path.join(template_d, "pest.pst")
     pst = pyemu.Pst(pst_name)
-    tnames = ["k_02","k_03"]
+    print(pst.adj_par_names)
+    tnames = ["k_03","k_04"]
 
     par = pst.parameter_data
     par.loc[tnames,"partrans"] = "tied"
-    par.loc[tnames,"partied"] = "k_01"
+    par.loc[tnames,"partied"] = "k_02"
 
     
     pst.pestpp_options = {}
@@ -905,5 +906,5 @@ if __name__ == "__main__":
     #tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
-    #tenpar_tied_test()
-    freyberg_dist_local_test()
+    tenpar_tied_test()
+    #freyberg_dist_local_test()

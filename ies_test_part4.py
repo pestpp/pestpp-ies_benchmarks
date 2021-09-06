@@ -1335,14 +1335,18 @@ def plot_zdt1_results(noptmax=None):
     oe_pt_base = pd.read_csv(os.path.join(m_d+"_base","zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
     oe_pt = pd.read_csv(os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
     import matplotlib.pyplot as plt
-    fig,ax = plt.subplots(1,1,figsize=(10,10))
+    fig,ax = plt.subplots(1,1,figsize=(5,5))
 
     ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", label="prior")
-    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="mm posterior with weight en")
+    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="multi-modal posterior")
     ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard form posterior")
-    ax.legend(loc="upper right")
-    ax.set_title("bi-objective zdt1 optimization benchmark",loc="left")
-    plt.savefig(os.path.join(m_d,"compare_{0}.pdf".format(noptmax)))
+    ax.legend(loc="upper right",fontsize=10)
+    #ax.set_title("bi-objective zdt1 optimization benchmark",loc="left",fontsize=10)
+    ax.tick_params(axis='both', which='major', labelsize=10)
+    ax.set_xlabel("objective 1 (minimize)")
+    ax.set_ylabel("objective 2 (minimize)")
+    plt.tight_layout()
+    plt.savefig(os.path.join(m_d,"compare_{0}.png".format(noptmax)))
 
 
 if __name__ == "__main__":
@@ -1375,7 +1379,7 @@ if __name__ == "__main__":
     # tenpar_upgrade_on_disk_test()
     #multimodal_test()
     #mm_invest()
-    plot_mm1_results(4, func="circle", show_info=False)
+    plot_mm1_results(4, func="circle", show_info=True)
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(10)
