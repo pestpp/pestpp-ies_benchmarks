@@ -1431,6 +1431,14 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
         shutil.rmtree(test_d)
     #shutil.copytree(template_d, test_d)
 
+    #add a mess of fake pars
+    fake_tpl = os.path.join(template_d,"fake.dat.tpl")
+    with open(fake_tpl,'w') as f:
+        f.write("ptf ~\n")
+        for i in range(100):
+            f.write("fake_{0} ~  fake_{0}   ~\n".format(i))
+    pst.add_parameters(fake_tpl,pst_path=".")
+
     pst.parameter_data.loc[:,"partrans"] = "log"
     cov = pyemu.Cov.from_parameter_data(pst)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=cov,num_reals=10)
@@ -1511,11 +1519,12 @@ if __name__ == "__main__":
     #tenpar_align_test()
     # tenpar_align_test_2()
     # tenpar_covloc_test()
-    # tenpar_upgrade_on_disk_test()
+    #tenpar_upgrade_on_disk_test()
     #multimodal_test()
     #mm_invest()
     #plot_mm1_results(4, func="circle", show_info=True)
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(10)
+    tenpar_upgrade_on_disk_test_with_fixed()
     tenpar_upgrade_on_disk_test_with_fixed2()
