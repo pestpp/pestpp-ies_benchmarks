@@ -56,4 +56,5 @@ hk_Layer_1.ref.tpl hk_Layer_1.ref
 strt_Layer_1.ref.tpl strt_Layer_1.ref
 10par_xsec.hds.ins 10par_xsec.hds
 ++ies_num_reals(30)
+++ies_reg_factor(0.5)
 ++ies_group_draws(False)

@@ -616,7 +616,35 @@ def tenpar_high_phi_test():
                                  port=port)
     phi5 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     assert os.path.exists(os.path.join(test_d, "pest_high_phi.3.obs.csv"))
+    
 
+
+    pst.pestpp_options = {}
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_lambda_mults"] = [0.5, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.9, 1.0]
+    pst.pestpp_options['ies_subset_size'] = 3
+    #pst.pestpp_options["ies_debug_high_subset_phi"] = True
+    #pst.pestpp_options["ies_debug_fail_subset"] = True
+    #pst.pestpp_options["ies_debug_fail_remainder"] = True
+    #pst.pestpp_options["ies_debug_bad_phi"] = True
+    pst.pestpp_options["ies_debug_high_upgrade_phi"] = True
+    pst.pestpp_options["ies_center_on"] = "base"
+    pst.control_data.noptmax = 3
+    pst.write(os.path.join(template_d, "pest_high_phi.pst"))
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+                                 master_dir=test_d, verbose=True, worker_root=model_d,
+                                 port=port)
+    phi5 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
+    assert os.path.exists(os.path.join(test_d, "pest_high_phi.3.obs.csv"))
+    for i in range(2):
+        rpe_file = os.path.join(test_d,"pest_high_phi.rejected.{0}.par.csv".format(i+1))
+        roe_file = os.path.join(test_d,"pest_high_phi.rejected.{0}.obs.csv".format(i+1))
+        assert os.path.exists(rpe_file),rpe_file
+        assert os.path.exists(roe_file),roe_file
+        roe = pd.read_csv(roe_file,index_col=0)
+        rpe = pd.read_csv(rpe_file,index_col=0)
+        assert roe.shape[0] == rpe.shape[0]
 
 def freyberg_svd_draws_invest():
     import flopy
@@ -1514,7 +1542,7 @@ if __name__ == "__main__":
     # freyberg_center_on_test()
     # freyberg_pdc_test()
     # freyberg_rcov_tet()
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     # freyberg_center_on_test()
     #tenpar_align_test()
     # tenpar_align_test_2()
@@ -1526,5 +1554,12 @@ if __name__ == "__main__":
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(10)
-    tenpar_upgrade_on_disk_test_with_fixed()
-    tenpar_upgrade_on_disk_test_with_fixed2()
+    #tenpar_upgrade_on_disk_test_with_fixed()
+    #tenpar_upgrade_on_disk_test_with_fixed2()
+    tenpar_high_phi_test()
+
+
+
+
+
+
