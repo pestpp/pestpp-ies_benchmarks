@@ -1522,7 +1522,7 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
 
 
 if __name__ == "__main__":
-    # tenpar_base_run_test()
+    tenpar_base_run_test()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
     # tenpar_xsec_combined_autoadaloc_test()
