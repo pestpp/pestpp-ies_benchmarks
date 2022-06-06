@@ -323,8 +323,8 @@ def freyberg_aal_test():
     par.loc[par.pargp == "hk", "partrans"] = "log"
 
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 100
-    pst.pestpp_options["ies_subset_size"] = 100
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_subset_size"] = 10
     pst.pestpp_options["ies_num_threads"] = 20
     pst.pestpp_options["ies_lambda_mults"] = [1.0]
     pst.pestpp_options["lambda_scale_fac"] = 1.0
@@ -409,8 +409,8 @@ def freyberg_combined_aal_test():
     par = pst.parameter_data
 
     pst.pestpp_options = {}
-    pst.pestpp_options["ies_num_reals"] = 100
-    pst.pestpp_options["ies_subset_size"] = 100
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["ies_subset_size"] = 10
     pst.pestpp_options["ies_num_threads"] = 20
     pst.pestpp_options["ies_lambda_mults"] = [1.0]
     pst.pestpp_options["lambda_scale_fac"] = 1.0
@@ -744,10 +744,11 @@ def freyberg_pdc_test():
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options["ies_autoadaloc"] = True
     pst.control_data.nphinored = 20
-    pst.control_data.noptmax = 2
+    pst.control_data.noptmax = -1
     pst.write(os.path.join(template_d, "pest_base.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_base.pst", num_workers=5, master_dir=test_d,
                                  worker_root=model_d, port=port)
+    return
     phi_csv = os.path.join(test_d, "pest_base.phi.actual.csv")
     assert os.path.exists(phi_csv), phi_csv
     pdc_phi = pd.read_csv(phi_csv, index_col=0)
@@ -1104,7 +1105,7 @@ def tenpar_upgrade_on_disk_test():
 
 def multimodal_test():
     noptmax = 4
-    num_reals = 100
+    num_reals = 30
     # can be "circle" or "h"
     func = "circle"
     model_d = "mm1"
@@ -1335,7 +1336,7 @@ def zdt1_weight_test():
     pst.pestpp_options["ies_obs_en"] = "obs.csv"
     oe.to_csv(os.path.join(t_d, "obs.csv"))
 
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 2
     pst.write(os.path.join(t_d,"zdt1_ies.pst"))
     m_d = os.path.join(model_d,"zdt1_master1_base")
     #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d)
@@ -1556,7 +1557,8 @@ if __name__ == "__main__":
     #plot_zdt1_results(10)
     #tenpar_upgrade_on_disk_test_with_fixed()
     #tenpar_upgrade_on_disk_test_with_fixed2()
-    tenpar_high_phi_test()
+    #tenpar_high_phi_test()
+    #freyberg_pdc_test()
 
 
 
