@@ -1399,12 +1399,15 @@ def tenpar_upgrade_on_disk_test_with_fixed():
     pe.to_csv(os.path.join(template_d,"prior_all.csv"))
     pst.parameter_data.loc[pst.par_names[:-1],"partrans"] = "fixed"
 
-
+    pst.pestpp_options = {}
+    pst.pestpp_options.pop("ies_bad_phi",None)
+    pst.pestpp_options.pop("ies_bad_phi_sigma", None)
 
     pst.pestpp_options["ies_no_noise"] = True
     pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
     pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
     pst.pestpp_options["ies_save_lambda_en"] = True
+    #pst.pestpp_options["ies_subset_size"] = 1000
     pst.pestpp_options["ies_par_en"] = "prior_all.csv"
     pst.control_data.noptmax = 2
     pst_name = "pest_upgrade.pst"
@@ -1419,6 +1422,7 @@ def tenpar_upgrade_on_disk_test_with_fixed():
                                                             format(pst.control_data.noptmax))), index_col=0)
 
     pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst_name = "pest_upgrade_2.pst"
     pst.write(os.path.join(template_d, pst_name))
     test_d = os.path.join(model_d, "master_upgrade_2_fixed")
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
@@ -1521,8 +1525,117 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
     assert d.max().max() < 1.0e-6
 
 
+def tenpar_upgrade_on_disk_test_weight_ensemble_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_upgrade_weight_1")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+
+    pst.pestpp_options["ies_no_noise"] = True
+    pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["save_binary"] = True
+
+    pst.control_data.noptmax = -1
+    pst_name = "pest_weight.pst"
+    pst.write(os.path.join(template_d, pst_name))
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+    phi1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
+
+    oe1 = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d, pst_name.replace(".pst", ".0.obs.jcb")))
+    pv = oe1.phi_vector
+    pst = pyemu.Pst(os.path.join(test_d,pst_name))
+    weights = {}
+    for real,phi in zip(oe1.index.values,pv):
+        pst = pyemu.Pst(os.path.join(test_d,pst_name))
+        pst.res.loc[pst.obs_names,"modelled"] = oe1._df.loc[real,pst.obs_names].values
+        print(real,phi,pst.phi)
+        d = {n:0.5 for n in pst.nnz_obs_names}
+        pst.adjust_weights(obs_dict=d)
+        print("...",pst.phi)
+        weights[real] = pst.observation_data.loc[pst.nnz_obs_names,"weight"].values
+
+    wdf = pd.DataFrame(weights,index=pst.nnz_obs_names).T
+
+    #print(wdf)
+
+    wdf = pyemu.ObservationEnsemble(df=wdf,pst=pst)
+    wdf.to_binary(os.path.join(template_d,"weights.jcb"))
+    pst.pestpp_options["ies_weights_en"] = "weights.jcb"
+    pst.pestpp_options["ies_par_en"] = "par.jcb"
+    pst.pestpp_options["ies_obs_en"] = "noise.jcb"
+    pst.pestpp_options["ies_restart_obs_en"] = "obs.jcb"
+    pst.pestpp_options.pop("ies_no_noise",None)
+    shutil.copy2(os.path.join(test_d,"pest_weight.0.par.jcb"),os.path.join(template_d,"par.jcb"))
+    shutil.copy2(os.path.join(test_d,"pest_weight.0.obs.jcb"),os.path.join(template_d,"obs.jcb"))
+    #shutil.copy2(os.path.join(test_d,"pest_weight.obs+noise.jcb"),os.path.join(template_d,"noise.jcb"))
+    noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight.obs+noise.jcb"))
+    noise = noise.loc[oe1.index,:]
+    noise.to_binary(os.path.join(template_d,"noise.jcb"))
+    pst.control_data.noptmax = 1
+    pst_name = "pest_weight_restart.pst"
+    pst.write(os.path.join(template_d,pst_name))
+    test_d = os.path.join(model_d, "master_upgrade_weight_2")
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+    
+
+
+def tenpar_extra_binary_vars_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_extra_vars")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["save_binary"] = True
+
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst))
+    pe.loc[:,"pextra1"] = 1.0
+    pe.loc[:,"pextra2"] = 2.0
+    pe.to_binary(os.path.join(template_d, "extra_par.jcb"))
+    pst.pestpp_options["ies_par_en"] = "extra_par.jcb"
+
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst=pst, cov=pyemu.Cov.from_observation_data(pst))
+    oe.loc[:, "oextra1"] = 1.0
+    oe.loc[:, "oextra2"] = 2.0
+    oe.to_binary(os.path.join(template_d, "extra_noise.jcb"))
+    pst.pestpp_options["ies_obs_en"] = "extra_noise.jcb"
+
+    pst.control_data.noptmax = 1
+    pst_name = "pest_extra.pst"
+    pst.write(os.path.join(template_d,pst_name))
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+
+
 if __name__ == "__main__":
-    tenpar_base_run_test()
+    #tenpar_base_run_test()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
     # tenpar_xsec_combined_autoadaloc_test()
@@ -1559,7 +1672,9 @@ if __name__ == "__main__":
     #tenpar_upgrade_on_disk_test_with_fixed2()
     #tenpar_high_phi_test()
     #freyberg_pdc_test()
-
+    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    #invest()
+    tenpar_extra_binary_vars_test()
 
 
 
