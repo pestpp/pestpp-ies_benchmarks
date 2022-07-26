@@ -1574,16 +1574,16 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     wdf = pyemu.ObservationEnsemble(df=wdf,pst=pst)
     wdf.to_binary(os.path.join(template_d,"weights.jcb"))
     pst.pestpp_options["ies_weights_en"] = "weights.jcb"
-    pst.pestpp_options["ies_par_en"] = "par.jcb"
-    pst.pestpp_options["ies_obs_en"] = "noise.jcb"
-    pst.pestpp_options["ies_restart_obs_en"] = "obs.jcb"
+    pst.pestpp_options["ies_par_en"] = "par1.jcb"
+    pst.pestpp_options["ies_obs_en"] = "noise1.jcb"
+    pst.pestpp_options["ies_restart_obs_en"] = "obs1.jcb"
     pst.pestpp_options.pop("ies_no_noise",None)
-    shutil.copy2(os.path.join(test_d,"pest_weight.0.par.jcb"),os.path.join(template_d,"par.jcb"))
-    shutil.copy2(os.path.join(test_d,"pest_weight.0.obs.jcb"),os.path.join(template_d,"obs.jcb"))
+    shutil.copy2(os.path.join(test_d,"pest_weight.0.par.jcb"),os.path.join(template_d,"par1.jcb"))
+    shutil.copy2(os.path.join(test_d,"pest_weight.0.obs.jcb"),os.path.join(template_d,"obs1.jcb"))
     #shutil.copy2(os.path.join(test_d,"pest_weight.obs+noise.jcb"),os.path.join(template_d,"noise.jcb"))
     noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight.obs+noise.jcb"))
     noise = noise.loc[oe1.index,:]
-    noise.to_binary(os.path.join(template_d,"noise.jcb"))
+    noise.to_binary(os.path.join(template_d,"noise1.jcb"))
     pst.control_data.noptmax = 1
     pst_name = "pest_weight_restart.pst"
     pst.write(os.path.join(template_d,pst_name))
