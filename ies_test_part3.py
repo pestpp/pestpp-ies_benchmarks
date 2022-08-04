@@ -703,6 +703,7 @@ def tenpar_tied_test():
     par = pst.parameter_data
     par.loc[tnames,"partrans"] = "tied"
     par.loc[tnames,"partied"] = "k_02"
+    par.loc["k_02","parval1"] = 2.5
 
     
     pst.pestpp_options = {}
@@ -712,6 +713,14 @@ def tenpar_tied_test():
     #pst.pestpp_options["ies_subset_size"] = 11
     pst.pestpp_options["ies_save_binary"] = True
     
+    pst.control_data.noptmax = 0
+    pst_name = os.path.join(template_d, "pest_tied.pst")
+    pst.write(pst_name)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_tied.pst"),cwd=template_d)
+    df = pyemu.pst_utils.read_parfile(os.path.join(template_d,"pest_tied.base.par"))
+    assert df.loc[tnames[0],"parval1"] == df.loc["k_02","parval1"]
+    assert df.loc[tnames[1], "parval1"] == df.loc["k_02", "parval1"]
+
     #pst.pestpp_options["ies_verbose_level"] = 3
     pst.control_data.noptmax = 1
 
@@ -724,12 +733,55 @@ def tenpar_tied_test():
     
     pe = pyemu.ParameterEnsemble.from_binary(filename=os.path.join(test_d,"pest_tied.0.par.jcb"),pst=pst)
     assert pe.shape[1] == pst.npar,"{0} vs {1}".format(pe.shape[1],pst.npar)
-    #pe = pe.loc[:,pst.par_names]
-    print(pe.columns)
-    print(pst.par_names)
     assert list(pe.columns) == pst.par_names
+    d = pe._df.loc[:,tnames[0]] - pe._df.loc[:,"k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+    d = pe._df.loc[:,tnames[1]] - pe._df.loc[:,"k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
 
-    print(pe.loc[:,tnames].sum() == par.loc[tnames,"parval1"])
+    pe = pyemu.ParameterEnsemble.from_binary(filename=os.path.join(test_d,"pest_tied.1.par.jcb"),pst=pst)
+    assert pe.shape[1] == pst.npar,"{0} vs {1}".format(pe.shape[1],pst.npar)
+    assert list(pe.columns) == pst.par_names
+    d = pe._df.loc[:,tnames[0]] - pe._df.loc[:,"k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+    d = pe._df.loc[:,tnames[1]] - pe._df.loc[:,"k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+
+    pst.pestpp_options["ies_save_binary"] = False
+    pst.control_data.noptmax = 1
+    # pst.pestpp_options["ies_verbose_level"] = 3
+    pst_name = os.path.join(template_d, "pest_tied.pst")
+    pst.write(pst_name)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest_tied.pst", num_workers=5,
+                                master_dir=test_d, verbose=True, worker_root=model_d,
+                                port=port)
+    pe = pyemu.ParameterEnsemble.from_csv(filename=os.path.join(test_d, "pest_tied.0.par.csv"), pst=pst)
+    assert pe.shape[1] == pst.npar, "{0} vs {1}".format(pe.shape[1], pst.npar)
+    assert list(pe.columns) == pst.par_names
+    d = pe._df.loc[:, tnames[0]] - pe._df.loc[:, "k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+    d = pe._df.loc[:, tnames[1]] - pe._df.loc[:, "k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+
+    pe = pyemu.ParameterEnsemble.from_csv(filename=os.path.join(test_d, "pest_tied.1.par.csv"), pst=pst)
+    assert pe.shape[1] == pst.npar, "{0} vs {1}".format(pe.shape[1], pst.npar)
+    assert list(pe.columns) == pst.par_names
+    d = pe._df.loc[:, tnames[0]] - pe._df.loc[:, "k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+    d = pe._df.loc[:, tnames[1]] - pe._df.loc[:, "k_02"].values
+    print(d)
+    assert np.abs(d).max() < 0.0001
+    
+
+
+
 
 
 def tenpar_by_vars_test():
@@ -901,11 +953,11 @@ if __name__ == "__main__":
     #tenpar_xsec_aal_sigma_dist_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
-    tenpar_by_vars_test()
+    #tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
     #tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
-    #tenpar_tied_test()
+    tenpar_tied_test()
     #freyberg_dist_local_test()
