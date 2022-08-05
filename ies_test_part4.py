@@ -932,7 +932,7 @@ def tenpar_align_test():
         print(pr, or1)
         if (pr != or1):
             raise Exception("real names differ " + pr + "," + or1)
-    oe1.set_index("real_name")
+    oe1.index = oe1.pop("real_name")
     oe1.to_csv(os.path.join(template_d, "align_obs_restart.csv"))
     shutil.copy2(os.path.join(test_d, pst_name.replace(".pst", ".0.par.csv")),
                  os.path.join(template_d, "align_par.csv"))
@@ -1658,7 +1658,7 @@ if __name__ == "__main__":
     # freyberg_rcov_tet()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     # freyberg_center_on_test()
-    #tenpar_align_test()
+    tenpar_align_test()
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
@@ -1674,7 +1674,7 @@ if __name__ == "__main__":
     #freyberg_pdc_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #invest()
-    tenpar_extra_binary_vars_test()
+    #tenpar_extra_binary_vars_test()
 
 
 
