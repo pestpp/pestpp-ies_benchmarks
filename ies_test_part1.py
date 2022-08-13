@@ -1521,9 +1521,11 @@ def tenpar_restart_similar_test2():
     noise = pd.read_csv(os.path.join(test_d,"pest.obs+noise.csv"),index_col=0)
     oe = pd.read_csv(os.path.join(test_d,"pest.0.obs.csv"),index_col=0)
     pe = pd.read_csv(os.path.join(test_d,"pest.0.par.csv"),index_col=0)
-    assert oe.shape[0] == pe.shape[0]
-    assert noise.shape[0] == pe.shape[0]
-    
+    print(pe.shape,oe.shape)
+    assert oe.shape[0] == pe.shape[0],"{0},{1}".format(oe.shape,pe.shape)
+    assert noise.shape[0] == pe.shape[0],"{0},{1}".format(noise.shape,pe.shape)
+
+
     
 if __name__ == "__main__":
     
