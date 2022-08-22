@@ -1526,10 +1526,130 @@ def tenpar_restart_similar_test2():
     assert noise.shape[0] == pe.shape[0],"{0},{1}".format(noise.shape,pe.shape)
 
 
+def tenpar_localizer_pdc_test():
+    """tenpar local test with  pdc causing some pars to be completely localized out
+    """
+    
+    for out_ext in [".mat",".csv",".jcb"]:
+
+        model_d = "ies_10par_xsec"
+        test_d = os.path.join(model_d, "master_localizer_pdc_test")
+        template_d = os.path.join(model_d, "test_template")
+        if not os.path.exists(template_d):
+            raise Exception("template_d {0} not found".format(template_d))
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        #shutil.copytree(template_d, test_d)
+        pst_name = os.path.join(template_d, "pest.pst")
+        pst = pyemu.Pst(pst_name)
+
+        pst.observation_data.loc[pst.nnz_obs_names[0],"obsval"] += 100
+
+        #mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
+        mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
+        mat.loc[:,:] = 0.0
+        mat.loc[pst.nnz_obs_names[0],pst.adj_par_names[:2]] = 1.0
+        mat.loc[pst.nnz_obs_names[1],pst.adj_par_names[2:]] = 1.0
+        
+        #mat.iloc[0,:] = 1
+        loc_name = "localizer" + out_ext
+        
+        if out_ext == ".mat":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_ascii(os.path.join(template_d,loc_name))
+        elif out_ext == ".csv":
+            mat.to_csv(os.path.join(template_d,loc_name))
+        elif out_ext == ".jcb":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_binary(os.path.join(template_d,loc_name))
+
+        cov = pyemu.Cov.from_parameter_data(pst)
+        pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+        pe.enforce()
+        pe.to_csv(os.path.join(template_d, "par_local.csv"))
+
+        oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst,num_reals=10)
+        oe.to_csv(os.path.join(template_d,"obs_local.csv"))
+
+        pst.pestpp_options = {}
+        pst.pestpp_options["ies_num_reals"] = 10
+        pst.pestpp_options["ies_localizer"] = loc_name
+        pst.pestpp_options["ies_lambda_mults"] = 1.0
+        pst.pestpp_options["lambda_scale_fac"] = 1.0
+        pst.pestpp_options["ies_subset_size"] = 11
+        pst.pestpp_options["ies_par_en"] = "par_local.csv"
+        pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
+        pst.pestpp_options["ies_drop_conflicts"] = True
+        pst.pestpp_options["ies_verbose_level"] = 1
+        pst.control_data.noptmax = 2
+
+        #pst.pestpp_options["ies_verbose_level"] = 3
+        pst_name = os.path.join(template_d,"pest_local.pst")
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local.pst", num_workers=10,
+                                       master_dir=test_d, verbose=True, worker_root=model_d,
+                                       port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax+1
+        assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+
+        # now with a group-based localizer
+        test_d = os.path.join(model_d, "master_localizer_pdc_test2")
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        par = pst.parameter_data
+        par.loc[pst.adj_par_names[:4],"pargp"] = "group1"
+        par.loc[pst.adj_par_names[4:],"pargp"] = "group2"
+
+        mat = pyemu.Matrix.from_names(pst.nnz_obs_names,["group1","group2"]).to_dataframe()
+        mat.loc[:,:] = 0.0
+        mat.loc[pst.nnz_obs_names[0],"group1"] = 1.0
+        mat.loc[pst.nnz_obs_names[1],"group2"] = 1.0
+        
+        if out_ext == ".mat":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_ascii(os.path.join(template_d,loc_name))
+        elif out_ext == ".csv":
+            mat.to_csv(os.path.join(template_d,loc_name))
+        elif out_ext == ".jcb":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_binary(os.path.join(template_d,loc_name))
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local.pst", num_workers=10,
+                                       master_dir=test_d, verbose=True, worker_root=model_d,
+                                       port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax+1
+        assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+
+        #now restart
+
+        shutil.copy2(os.path.join(test_d,"pest_local.0.obs.csv"),os.path.join(template_d,"restart_local_obs.csv"))
+        shutil.copy2(os.path.join(test_d,"pest_local.0.par.csv"),os.path.join(template_d,"restart_local_par.csv"))
+        shutil.copy2(os.path.join(test_d,"pest_local.obs+noise.csv"),os.path.join(template_d,"restart_local_noise.csv"))
+        test_d = os.path.join(model_d, "master_localizer_pdc_test3")
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        pst.pestpp_options["ies_par_en"] = "restart_local_par.csv"
+        pst.pestpp_options["ies_obs_en"] = "restart_local_noise.csv"
+        pst.pestpp_options["ies_restart_obs_en"] = "restart_local_obs.csv"
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local.pst", num_workers=10,
+                                       master_dir=test_d, verbose=True, worker_root=model_d,
+                                       port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax+1
+        assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+        
+
+
+
+
     
 if __name__ == "__main__":
     
-    tenpar_restart_similar_test2()
+    #tenpar_restart_similar_test2()
+    tenpar_localizer_pdc_test()
     # full list of tests
     #tenpar_subset_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
