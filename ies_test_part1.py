@@ -1651,10 +1651,10 @@ def tenpar_localizer_pdc_test():
         assert phi_df2.shape[0] == pst.control_data.noptmax+1
         assert phi_df2.loc[phi_df1.index[-1],"mean"] < phi_df2.loc[phi_df1.index[0],"mean"]
         final_phi2 = phi_df2.loc[phi_df2.index[-1],"mean"]
-        assert np.abs(final_phi1 - final_phi2) < 0.000001,"{0},{1}".format(final_phi1,final_phi2)
+        assert np.abs(final_phi1 - final_phi2) < 0.001,"{0},{1}".format(final_phi1,final_phi2)
         final_phis.append(phi_df2.loc[phi_df2.index[-1],"mean"])
     final_phis = np.array(final_phis)
-    assert np.abs(final_phis.min() - final_phis.max()) < 0.0001, "{0},{1}".format(final_phis.min(),final_phis.max())     
+    assert np.abs(final_phis.min() - final_phis.max()) < 0.001, "{0},{1}".format(final_phis.min(),final_phis.max())     
 
 
 def tenpar_localizer_pdc_forgive_test():
@@ -1778,10 +1778,10 @@ def tenpar_localizer_pdc_forgive_test():
         assert phi_df2.shape[0] == pst.control_data.noptmax+1
         assert phi_df2.loc[phi_df1.index[-1],"mean"] < phi_df2.loc[phi_df1.index[0],"mean"]
         final_phi2 = phi_df2.loc[phi_df2.index[-1],"mean"]
-        assert np.abs(final_phi1 - final_phi2) < 0.000001,"{0},{1}".format(final_phi1,final_phi2)
+        assert np.abs(final_phi1 - final_phi2) < 0.001,"{0},{1}".format(final_phi1,final_phi2)
         final_phis.append(phi_df2.loc[phi_df2.index[-1],"mean"])
     final_phis = np.array(final_phis)
-    assert np.abs(final_phis.min() - final_phis.max()) < 0.0001, "{0},{1}".format(final_phis.min(),final_phis.max())   
+    assert np.abs(final_phis.min() - final_phis.max()) < 0.001, "{0},{1}".format(final_phis.min(),final_phis.max())   
         
 
 
