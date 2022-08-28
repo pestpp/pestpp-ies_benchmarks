@@ -12,7 +12,7 @@ import pyemu
 bin_path = os.path.join("test_bin")
 if "linux" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"linux")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     bin_path = os.path.join(bin_path,"mac")
 else:
     bin_path = os.path.join(bin_path,"win")
@@ -29,7 +29,7 @@ else:
         
 if "windows" in platform.platform().lower():
     exe_path = os.path.join(bin_path, "win", "pestpp-ies.exe")
-elif "darwin" in platform.platform().lower():
+elif "darwin" in platform.platform().lower() or "macos" in platform.platform().lower():
     exe_path = os.path.join(bin_path,  "mac", "pestpp-ies")
 else:
     exe_path = os.path.join(bin_path, "linux", "pestpp-ies")
@@ -304,6 +304,10 @@ def freyberg_localizer_test3():
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
     pst.pestpp_options["ies_verbose_level"] = 1
     pst.pestpp_options["ies_localize_how"] = "par"
+
+
+    #pst.pestpp_options["panther_agent_freeze_on_fail"] = True
+
     pst.control_data.noptmax = 3
     print("writing pst")
     pst.write(os.path.join(template_d, "pest_local.pst"))
@@ -903,8 +907,8 @@ if __name__ == "__main__":
     #eval_freyberg()
     #eval_10par_xsec()
 
-    shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    freyberg_localizer_test3()
     #full list of tests
     # tenpar_subset_test()
     # tenpar_full_cov_test()
@@ -937,7 +941,7 @@ if __name__ == "__main__":
     #tenpar_tied_test()
     #tenpar_by_vars_test()
 
-    tenpar_restart_test()
+    #tenpar_restart_test()
     #tenpar_par_restart_byvars_test()
     #tenpar_restart_wo_noise_w_base_test()
     #tenpar_restart_test_2()
