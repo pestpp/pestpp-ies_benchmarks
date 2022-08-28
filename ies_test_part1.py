@@ -1546,8 +1546,7 @@ def tenpar_localizer_pdc_test():
         pst.observation_data.loc[pst.nnz_obs_names[0],"obsval"] += 100
 
         #mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
-        #mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
-        mat = pyemu.Matrix.from_names(pst.obs_names,pst.par_names).to_dataframe()
+        mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
         mat.loc[:,:] = 0.0
         mat.loc[pst.nnz_obs_names[0],pst.adj_par_names[:2]] = 1.0
         mat.loc[pst.nnz_obs_names[1],pst.adj_par_names[2:]] = 1.0
