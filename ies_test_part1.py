@@ -1758,7 +1758,7 @@ def tenpar_localizer_pdc_forgive_test():
         phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local_pdc.phi.meas.csv"))
         assert phi_df1.shape[0] == pst.control_data.noptmax+1
         assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
-
+        final_phi1 = phi_df1.loc[phi_df1.index[-1],"mean"]
         #now restart
 
         shutil.copy2(os.path.join(test_d,"pest_local_pdc.0.obs.csv"),os.path.join(template_d,"restart_local_obs.csv"))
@@ -1789,7 +1789,7 @@ def tenpar_localizer_pdc_forgive_test():
 if __name__ == "__main__":
     
     #tenpar_restart_similar_test2()
-    tenpar_localizer_pdc_test()
+    #tenpar_localizer_pdc_test()
     tenpar_localizer_pdc_forgive_test()
     
     # full list of tests
