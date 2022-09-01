@@ -1601,6 +1601,8 @@ def tenpar_localizer_pdc_test():
         phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local_pdc.phi.meas.csv"))
         assert phi_df1.shape[0] == pst.control_data.noptmax+1
         assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs-1, pst.npar_adj), str(mat.shape)
 
         # now with a group-based localizer
         test_d = os.path.join(model_d, "master_localizer_pdc_test2_{0}".format(out_ext.replace('.','')))
@@ -1631,6 +1633,8 @@ def tenpar_localizer_pdc_test():
         assert phi_df1.shape[0] == pst.control_data.noptmax+1
         assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
         final_phi1 = phi_df1.loc[phi_df1.index[-1],"mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs - 1, 2), str(mat.shape)
 
         #now restart
 
@@ -1653,6 +1657,8 @@ def tenpar_localizer_pdc_test():
         final_phi2 = phi_df2.loc[phi_df2.index[-1],"mean"]
         assert np.abs(final_phi1 - final_phi2) < 0.001,"{0},{1}".format(final_phi1,final_phi2)
         final_phis.append(phi_df2.loc[phi_df2.index[-1],"mean"])
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs - 1, 2), str(mat.shape)
     final_phis = np.array(final_phis)
     assert np.abs(final_phis.min() - final_phis.max()) < 0.001, "{0},{1}".format(final_phis.min(),final_phis.max())     
 
@@ -1666,8 +1672,6 @@ def tenpar_localizer_pdc_forgive_test():
         raise Exception("template_d {0} not found".format(template_d))
     pst_name = os.path.join(template_d, "pest.pst")
     pst = pyemu.Pst(pst_name)
-    #spike one of the obs...
-    pst.observation_data.loc[pst.nnz_obs_names[0],"obsval"] += 100
     cov = pyemu.Cov.from_parameter_data(pst)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
     pe.enforce()
@@ -1682,8 +1686,6 @@ def tenpar_localizer_pdc_forgive_test():
         #shutil.copytree(template_d, test_d)
         pst_name = os.path.join(template_d, "pest.pst")
         pst = pyemu.Pst(pst_name)
-        #spike one of the obs...
-        pst.observation_data.loc[pst.nnz_obs_names[0],"obsval"] += 100
 
     
         #mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
@@ -1729,6 +1731,8 @@ def tenpar_localizer_pdc_forgive_test():
         phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local_pdc.phi.meas.csv"))
         assert phi_df1.shape[0] == pst.control_data.noptmax+1
         assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs, pst.npar_adj), str(mat.shape)
 
         # now with a group-based localizer
         test_d = os.path.join(model_d, "master_localizer_pdc_forgive_test2_{0}".format(out_ext.replace('.','')))
@@ -1758,6 +1762,9 @@ def tenpar_localizer_pdc_forgive_test():
         phi_df1 = pd.read_csv(os.path.join(test_d,"pest_local_pdc.phi.meas.csv"))
         assert phi_df1.shape[0] == pst.control_data.noptmax+1
         assert phi_df1.loc[phi_df1.index[-1],"mean"] < phi_df1.loc[phi_df1.index[0],"mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs, 2), str(mat.shape)
+
         final_phi1 = phi_df1.loc[phi_df1.index[-1],"mean"]
         #now restart
 
@@ -1780,17 +1787,207 @@ def tenpar_localizer_pdc_forgive_test():
         final_phi2 = phi_df2.loc[phi_df2.index[-1],"mean"]
         assert np.abs(final_phi1 - final_phi2) < 0.001,"{0},{1}".format(final_phi1,final_phi2)
         final_phis.append(phi_df2.loc[phi_df2.index[-1],"mean"])
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (pst.nnz_obs, 2), str(mat.shape)
     final_phis = np.array(final_phis)
     assert np.abs(final_phis.min() - final_phis.max()) < 0.001, "{0},{1}".format(final_phis.min(),final_phis.max())   
         
 
+def tenpar_localizer_pdc_obsgroup_test():
+    model_d = "ies_10par_xsec"
+    template_d = os.path.join(model_d, "test_template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
 
-    
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+    # spike one of the obs...
+
+    obs = pst.observation_data
+    obs.loc[:, "weight"] = 1.0
+    first = pst.obs_names[:4]
+    second = pst.obs_names[4:]
+    obs.loc[first, "obgnme"] = "group1"
+    obs.loc[second, "obgnme"] = "group2"
+
+    obs.loc[first, "obsval"] += 100
+    cov = pyemu.Cov.from_parameter_data(pst)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+    pe.enforce()
+
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=10)
+    final_phis = []
+    for out_ext in [".mat", ".csv", ".jcb"]:
+        test_d = os.path.join(model_d, "master_localizer_pdc_obsgroup_test_{0}".format(out_ext.replace('.', '')))
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        # shutil.copytree(template_d, test_d)
+
+        pe.to_csv(os.path.join(template_d, "par_local.csv"))
+        oe.to_csv(os.path.join(template_d, "obs_local.csv"))
+
+        pst_name = os.path.join(template_d, "pest.pst")
+        pst = pyemu.Pst(pst_name)
+        # spike one of the obs...
+        obs = pst.observation_data
+        obs.loc[:,"weight"] = 1.0
+        first = pst.obs_names[:4]
+        second = pst.obs_names[4:]
+        obs.loc[first,"obgnme"] = "group1"
+        obs.loc[second, "obgnme"] = "group2"
+
+        obs.loc[first, "obsval"] += 100
+
+        par = pst.parameter_data
+        par.loc[pst.adj_par_names[:4], "pargp"] = "group1"
+        par.loc[pst.adj_par_names[4:], "pargp"] = "group2"
+
+        # mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
+        mat = pyemu.Matrix.from_names(["group1","group2"], ["group1","group2"]).to_dataframe()
+        mat.loc[:, :] = 0.0
+        mat.loc["group1","group1"] = 1.0
+        mat.loc["group2","group2"] = 1.0
+
+        # mat.iloc[0,:] = 1
+        loc_name = "localizer" + out_ext
+
+        if out_ext == ".mat":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_ascii(os.path.join(template_d, loc_name))
+        elif out_ext == ".csv":
+            mat.to_csv(os.path.join(template_d, loc_name))
+        elif out_ext == ".jcb":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_binary(os.path.join(template_d, loc_name))
+
+        pst.pestpp_options = {}
+        pst.pestpp_options["ies_num_reals"] = 10
+        pst.pestpp_options["ies_localizer"] = loc_name
+        pst.pestpp_options["ies_lambda_mults"] = 1.0
+        pst.pestpp_options["lambda_scale_fac"] = 1.0
+        pst.pestpp_options["ies_subset_size"] = 11
+        pst.pestpp_options["ies_par_en"] = "par_local.csv"
+        pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
+        pst.pestpp_options["ies_drop_conflicts"] = True
+        pst.pestpp_options["ies_verbose_level"] = 4
+        pst.pestpp_options["ies_localizer_forgive_missing"] = False
+        pst.control_data.noptmax = 2
+
+        # pst.pestpp_options["ies_verbose_level"] = 3
+        pst_name = os.path.join(template_d, "pest_local_pdc.pst")
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_pdc.pst", num_workers=10,
+                                     master_dir=test_d, verbose=True, worker_root=model_d,
+                                     port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d, "pest_local_pdc.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax + 1
+        assert phi_df1.loc[phi_df1.index[-1], "mean"] < phi_df1.loc[phi_df1.index[0], "mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        assert mat.shape == (1, 2)
+
+
+def tenpar_localizer_pdc_obsgroup_forgive_test():
+    model_d = "ies_10par_xsec"
+    template_d = os.path.join(model_d, "test_template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+    # spike one of the obs...
+
+    obs = pst.observation_data
+    obs.loc[:, "weight"] = 1.0
+    first = pst.obs_names[:4]
+    second = pst.obs_names[4:]
+    obs.loc[first, "obgnme"] = "group1"
+    obs.loc[second, "obgnme"] = "group2"
+    obs.loc[first,"weight"] = 0.0
+
+    cov = pyemu.Cov.from_parameter_data(pst)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+    pe.enforce()
+
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=10)
+    final_phis = []
+    for out_ext in [".mat", ".csv", ".jcb"]:
+        test_d = os.path.join(model_d, "master_localizer_pdc_obsgroup_forgive_test_{0}".format(out_ext.replace('.', '')))
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        # shutil.copytree(template_d, test_d)
+
+        pe.to_csv(os.path.join(template_d, "par_local.csv"))
+        oe.to_csv(os.path.join(template_d, "obs_local.csv"))
+
+        pst_name = os.path.join(template_d, "pest.pst")
+        pst = pyemu.Pst(pst_name)
+        # spike one of the obs...
+        obs = pst.observation_data
+        obs.loc[:,"weight"] = 1.0
+        first = pst.obs_names[:4]
+        second = pst.obs_names[4:]
+        obs.loc[first,"obgnme"] = "group1"
+        obs.loc[second, "obgnme"] = "group2"
+        obs.loc[first, "weight"] = 0.0
+
+        par = pst.parameter_data
+        par.loc[pst.adj_par_names[:4], "pargp"] = "group1"
+        par.loc[pst.adj_par_names[4:], "pargp"] = "group2"
+
+        # mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
+        mat = pyemu.Matrix.from_names(["group1","group2"], ["group1","group2"]).to_dataframe()
+        mat.loc[:, :] = 0.0
+        mat.loc["group1","group1"] = 1.0
+        mat.loc["group2","group2"] = 1.0
+
+        # mat.iloc[0,:] = 1
+        loc_name = "localizer" + out_ext
+
+        if out_ext == ".mat":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_ascii(os.path.join(template_d, loc_name))
+        elif out_ext == ".csv":
+            mat.to_csv(os.path.join(template_d, loc_name))
+        elif out_ext == ".jcb":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_binary(os.path.join(template_d, loc_name))
+
+        pst.pestpp_options = {}
+        pst.pestpp_options["ies_num_reals"] = 10
+        pst.pestpp_options["ies_localizer"] = loc_name
+        pst.pestpp_options["ies_lambda_mults"] = 1.0
+        pst.pestpp_options["lambda_scale_fac"] = 1.0
+        pst.pestpp_options["ies_subset_size"] = 11
+        pst.pestpp_options["ies_par_en"] = "par_local.csv"
+        pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
+        pst.pestpp_options["ies_drop_conflicts"] = True
+        pst.pestpp_options["ies_verbose_level"] = 4
+        pst.pestpp_options["ies_localizer_forgive_missing"] = True
+        pst.control_data.noptmax = 2
+
+        # pst.pestpp_options["ies_verbose_level"] = 3
+        pst_name = os.path.join(template_d, "pest_local_pdc.pst")
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_pdc.pst", num_workers=10,
+                                     master_dir=test_d, verbose=True, worker_root=model_d,
+                                     port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d, "pest_local_pdc.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax + 1
+        assert phi_df1.loc[phi_df1.index[-1], "mean"] < phi_df1.loc[phi_df1.index[0], "mean"]
+
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d,"initialized_localizer.mat"))
+        assert mat.shape == (1,2)
+
+
+
+
+
 if __name__ == "__main__":
     
     #tenpar_restart_similar_test2()
     #tenpar_localizer_pdc_test()
-    tenpar_localizer_pdc_forgive_test()
+    #tenpar_localizer_pdc_obsgroup_test()
+    tenpar_localizer_pdc_obsgroup_forgive_test()
     
     # full list of tests
     #tenpar_subset_test()
