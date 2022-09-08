@@ -1634,11 +1634,74 @@ def tenpar_extra_binary_vars_test():
                                  master_dir=test_d, worker_root=model_d, port=port)
 
 
+
+def tenpar_adjust_weights_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_adjust_weights")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+
+
+    obs = pst.observation_data
+    obs.loc[pst.obs_names[:4],"obgnme"] = "og1a"
+    obs.loc[pst.obs_names[:4],"weight"] = 10 + 3.*(np.random.random(4))
+    obs.loc[pst.obs_names[4:8],"obgnme"] = "og1b"
+    obs.loc[pst.obs_names[4:8],"weight"] = 5
+    obs.loc[pst.obs_names[8:12],"obgnme"] = "og3"
+    obs.loc[pst.obs_names[8:12],"weight"] = 1
+    obs.loc[pst.obs_names[12:],"obgnme"] = "og4"
+    obs.loc[pst.obs_names[12:],"weight"] = 0.00001
+    obs.loc[:,"standard_deviation"] = 0.1
+    with open(os.path.join(template_d,"phi.csv"),'w') as f:
+        f.write("og1,0.333333\n")
+        f.write("og3,0.333333\n")
+        f.write("og4,0.333333\n")
+        
+
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["save_binary"] = True
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    pst.pestpp_options["ies_drop_conflicts"] = True
+    pst.pestpp_options['ies_verbose_level'] = 4
+    pst.pestpp_options["ies_bad_phi_sigma"] = -95
+
+    
+    pst.control_data.noptmax = 2
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+
+    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    assert os.path.exists(sumfile),sumfile
+    ogdf = pd.read_csv(sumfile)
+    phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"),index_col=0)
+    print(phidf.loc[0,"mean"])
+    print(ogdf.adjusted_phi.sum())
+    assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
+    assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
+
+
+
 if __name__ == "__main__":
     #tenpar_base_run_test()
+    tenpar_adjust_weights_test()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
-    tenpar_xsec_combined_autoadaloc_test()
+    #tenpar_xsec_combined_autoadaloc_test()
     # tenpar_xsec_aal_sigma_dist_test()
     #tenpar_by_vars_test()
     # tenpar_xsec_aal_invest()
@@ -1654,7 +1717,7 @@ if __name__ == "__main__":
     # freyberg_aal_invest()
     # tenpar_high_phi_test()
     # freyberg_center_on_test()
-    # freyberg_pdc_test()
+    #freyberg_pdc_test()
     # freyberg_rcov_tet()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     # freyberg_center_on_test()
