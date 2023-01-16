@@ -775,6 +775,12 @@ def tenpar_fixed_test2():
     assert df.loc[:,"k_01"].mean() == pst.parameter_data.loc["k_01","parval1"]
     assert np.abs(df.loc[:,"stage"] - pe.loc[:,"stage"]).max() < 1.0e-5
 
+    pst.control_data.noptmax = -2
+    par = pst.parameter_data
+    par.loc["stage","parval1"] = 2
+    pst.write(os.path.join(template_d,"pest_fixed.pst"))
+    pyemu.os_utils.run("{0} pest_fixed.pst".format(exe_path),cwd=template_d)
+
     # pe = pe.loc[:,pst.adj_par_names[3:]]
     # pe.to_csv(os.path.join(test_d, "par_fixed.csv"))
     # if "win" in platform.platform().lower(): #bc of the stupid popup
@@ -2026,7 +2032,7 @@ if __name__ == "__main__":
     #tenpar_localizer_pdc_test()
     #tenpar_localizer_pdc_obsgroup_test()
     #tenpar_localizer_pdc_obsgroup_forgive_test()
-    tenpar_localizer_pdc_pargroup_forgive_test()
+    #tenpar_localizer_pdc_pargroup_forgive_test()
     
     # full list of tests
     #tenpar_subset_test()
@@ -2045,7 +2051,7 @@ if __name__ == "__main__":
     # tenpar_narrow_range_test()
     #test_freyberg_ineq()
     # tenpar_fixed_test()
-    # tenpar_fixed_test2()\
+    tenpar_fixed_test2()\
     # tenpar_subset_how_test()
     # tenpar_localizer_test1()
     # tenpar_localizer_test2()

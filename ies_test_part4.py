@@ -1104,8 +1104,8 @@ def tenpar_upgrade_on_disk_test():
 
 
 def multimodal_test():
-    noptmax = 4
-    num_reals = 30
+    noptmax = 10
+    num_reals = 500
     # can be "circle" or "h"
     func = "circle"
     model_d = "mm1"
@@ -1589,7 +1589,24 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     pst.write(os.path.join(template_d,pst_name))
     test_d = os.path.join(model_d, "master_upgrade_weight_2")
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+                                master_dir=test_d, worker_root=model_d, port=port)
+
+    oe = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight_restart.0.obs.jcb"))
+    print(oe.shape)
+    assert oe.shape[1] == pst.nobs
+    pe = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight_restart.0.par.jcb"))
+    pe = pe.iloc[:-1,:]
+    pe.to_binary(os.path.join(template_d,"par1.jcb"))
+    noise = noise.iloc[:-1,:]
+    noise.to_binary(os.path.join(template_d,"noise1.jcb"))
+    wdf = wdf.iloc[:-1,:]
+    wdf.to_binary(os.path.join(template_d,"weights.jcb"))
+    pst.pestpp_options.pop("ies_restart_obs_en")
+    pst.write(os.path.join(template_d, pst_name))
+    test_d = os.path.join(model_d, "master_upgrade_weight_3")
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                master_dir=test_d, worker_root=model_d, port=port)
+
     
 
 
@@ -1697,8 +1714,9 @@ def tenpar_adjust_weights_test():
 
 
 if __name__ == "__main__":
+    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
     #tenpar_xsec_combined_autoadaloc_test()
@@ -1725,9 +1743,9 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
-    #multimodal_test()
+    multimodal_test()
     #mm_invest()
-    #plot_mm1_results(4, func="circle", show_info=True)
+    plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(10)
@@ -1738,8 +1756,4 @@ if __name__ == "__main__":
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #invest()
     #tenpar_extra_binary_vars_test()
-
-
-
-
-
+    #tenpar_covloc_test()
