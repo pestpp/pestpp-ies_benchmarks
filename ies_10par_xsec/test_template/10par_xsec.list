@@ -239,7 +239,7 @@
 
            TOTAL OUT =           0.5000             TOTAL OUT =           0.5000
 
-            IN - OUT =           0.0000              IN - OUT =           0.0000
+            IN - OUT =       2.9802E-08              IN - OUT =       2.9802E-08
 
  PERCENT DISCREPANCY =           0.00     PERCENT DISCREPANCY =           0.00
 
@@ -300,7 +300,7 @@
 
            TOTAL OUT =           1.5000             TOTAL OUT =           1.0000
 
-            IN - OUT =           0.0000              IN - OUT =           0.0000
+            IN - OUT =       1.1921E-07              IN - OUT =       5.9605E-08
 
  PERCENT DISCREPANCY =           0.00     PERCENT DISCREPANCY =           0.00
 
@@ -317,6 +317,6 @@
          TOTAL TIME 1.72800E+05  2880.0      48.000      2.0000     5.47570E-03
 1
 
- Run end date and time (yyyy/mm/dd hh:mm:ss): 2022/08/03 13:46:12
- Elapsed run time:  0.005 Seconds
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2022/09/06 14:25:39
+ Elapsed run time:  0.006 Seconds
 
