@@ -815,7 +815,8 @@ def tenpar_fixed_test():
     pst.parameter_data.loc[fixed_pars,"partrans"] = "fixed"
 
     def compare():
-        csvs = [f for f in os.listdir(test_d) if f.endswith(".par.csv") and "pest_fixed" in f]
+        csvs = [f for f in os.listdir(test_d) if f.endswith(".par.csv") and "pest_fixed" in f and "mean" not in f and "base" not in f]
+        print(csvs)
         dfs = [pd.read_csv(os.path.join(test_d,csv),index_col=0) for csv in csvs]
         for df in dfs:
             df.columns = df.columns.map(str.lower)
@@ -2050,8 +2051,8 @@ if __name__ == "__main__":
     #test_chenoliver()
     # tenpar_narrow_range_test()
     #test_freyberg_ineq()
-    # tenpar_fixed_test()
-    tenpar_fixed_test2()\
+    tenpar_fixed_test()
+    #tenpar_fixed_test2()
     # tenpar_subset_how_test()
     # tenpar_localizer_test1()
     # tenpar_localizer_test2()

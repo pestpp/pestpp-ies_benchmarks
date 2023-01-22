@@ -1714,7 +1714,7 @@ def tenpar_adjust_weights_test():
 
 
 if __name__ == "__main__":
-    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
     #tenpar_adjust_weights_test()
     # tenpar_base_par_file_test()
