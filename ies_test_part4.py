@@ -879,6 +879,7 @@ def freyberg_rcov_test():
     shutil.copy2(os.path.join(test_d, "pest_rescov.2.res.cov"), os.path.join(template_d, "post_obs.cov"))
     pst.pestpp_options["obscov"] = "post_obs.cov"
     pst.pestpp_options["ies_drop_conflicts"] = False
+    pst.pestpp_options["ies_verbose_level"] = 4
     pst.write(os.path.join(template_d, "pest_bmw.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_bmw.pst", num_workers=8, master_dir=test_d,
                                  worker_root=model_d, port=port)
@@ -1714,7 +1715,8 @@ def tenpar_adjust_weights_test():
 
 
 if __name__ == "__main__":
-    tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    freyberg_rcov_test()
+    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
     #tenpar_adjust_weights_test()
     # tenpar_base_par_file_test()
