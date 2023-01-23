@@ -877,7 +877,7 @@ def freyberg_rcov_test():
     diff = np.abs(np.diag(org_rescov.x) - np.diag(shrunk_rescov.x))
     print(diff)
     assert diff.sum() < 1.0e-6, diff.sum()
-    shutil.copy2(os.path.join(test_d, "pest_rescov.2.res.cov"), os.path.join(template_d, "post_obs.cov"))
+    shutil.copy2(os.path.join(test_d, "pest_rescov.2.shrunk_res.cov"), os.path.join(template_d, "post_obs.cov"))
     pst.pestpp_options["obscov"] = "post_obs.cov"
     pst.pestpp_options["ies_drop_conflicts"] = False
     
