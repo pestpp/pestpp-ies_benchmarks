@@ -1755,7 +1755,7 @@ def tenpar_adjust_weights_test():
     wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
-    for oname,weight in zip(adf.index,adj.weight):
+    for oname,weight in zip(adf.index,adf.weight):
         print(oname,weight)
         print(wdf.loc[:,oname])
         assert wdf.loc[:,oname].std() < 1.0e-6
@@ -1801,19 +1801,19 @@ def tenpar_adjust_weights_test_by_real():
     #    f.write("og3,0.333333\n")
     #    f.write("og4,0.333333\n")
 
-    df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(50))
+    df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(10))
     df.loc[:,:] = 0.33333
-    df.loc[np.arange(10),["og1"]] = 0.9
-    df.loc[np.arange(10),["og3"]] = 0.05
-    df.loc[np.arange(10),["og4"]] = 0.05
+    df.loc[np.arange(3),["og1"]] = 0.9
+    df.loc[np.arange(3),["og3"]] = 0.05
+    df.loc[np.arange(3),["og4"]] = 0.05
 
-    df.loc[np.arange(10,20),["og1"]] = 0.05
-    df.loc[np.arange(10,20),["og3"]] = 0.9
-    df.loc[np.arange(10,20),["og4"]] = 0.05
+    df.loc[np.arange(3,6),["og1"]] = 0.05
+    df.loc[np.arange(3,6),["og3"]] = 0.9
+    df.loc[np.arange(3,6),["og4"]] = 0.05
 
-    df.loc[np.arange(10,20),["og1"]] = 0.05
-    df.loc[np.arange(10,20),["og3"]] = 0.05
-    df.loc[np.arange(10,20),["og4"]] = 0.09
+    df.loc[np.arange(6,9),["og1"]] = 0.05
+    df.loc[np.arange(6,9),["og3"]] = 0.05
+    df.loc[np.arange(6,9),["og4"]] = 0.09
 
     df.to_csv(os.path.join(template_d,"phi.csv"))
 
@@ -1842,30 +1842,40 @@ def tenpar_adjust_weights_test_by_real():
     assert os.path.exists(sumfile),sumfile
     ogdf = pd.read_csv(sumfile)
     phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"),index_col=0)
-    print(phidf.loc[0,"mean"])
-    print(ogdf.adjusted_phi.sum())
+    #print(phidf.loc[0,"mean"])
+    #print(ogdf.adjusted_phi.sum())
     #assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
     #assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
 
     wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
-    print(wdf)
+    #print(wdf)
     for oname,weight in zip(obs.index,obs.weight):
         print(oname,weight)
         print(wdf.loc[:,oname])
         assert wdf.loc[:,oname].std() < 1.0e-6
         assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
 
-
+    adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    assert os.path.exists(adf_file)
+    adf = pd.read_csv(adf_file,index_col=0)
     wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
-    for oname,weight in zip(obs.index,obs.weight):
-        print(oname,weight)
+    for oname,weight in zip(adf.index,adf.weight):
+        
         print(wdf.loc[:,oname])
-        assert wdf.loc[:,oname].std() > 1.0e-6
-        assert np.abs(wdf.loc[:,oname].mean() - weight) > 1.0e-3 #precision issues...
+        print(oname,weight)
+        if weight == 0.0:
 
+            assert wdf.loc[:,oname].std() < 1.0e-6
+            assert wdf.loc[:,oname].max() == 0.0
+            assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+
+        else:
+
+            assert wdf.loc[:,oname].std() > 1.0
+            assert np.abs(wdf.loc[:,oname].mean() - weight) > 1.0e-3 #precision issues...
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
@@ -1873,7 +1883,7 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
     #tenpar_xsec_autoadaloc_test()
