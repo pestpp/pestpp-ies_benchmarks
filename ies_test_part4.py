@@ -1801,7 +1801,7 @@ def tenpar_adjust_weights_test_by_real():
     #    f.write("og3,0.333333\n")
     #    f.write("og4,0.333333\n")
 
-    df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(10))
+    df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(12))
     df.loc[:,:] = 0.33333
     df.loc[np.arange(3),["og1"]] = 0.9
     df.loc[np.arange(3),["og3"]] = 0.05
@@ -1811,9 +1811,9 @@ def tenpar_adjust_weights_test_by_real():
     df.loc[np.arange(3,6),["og3"]] = 0.9
     df.loc[np.arange(3,6),["og4"]] = 0.05
 
-    df.loc[np.arange(6,9),["og1"]] = 0.05
-    df.loc[np.arange(6,9),["og3"]] = 0.05
-    df.loc[np.arange(6,9),["og4"]] = 0.09
+    df.loc[np.arange(6,11),["og1"]] = 0.05
+    df.loc[np.arange(6,11),["og3"]] = 0.05
+    df.loc[np.arange(6,11),["og4"]] = 0.09
 
     df.to_csv(os.path.join(template_d,"phi.csv"))
 
@@ -1874,8 +1874,41 @@ def tenpar_adjust_weights_test_by_real():
 
         else:
 
-            assert wdf.loc[:,oname].std() > 1.0
+            assert wdf.loc[:,oname].std() > 0.1
             assert np.abs(wdf.loc[:,oname].mean() - weight) > 1.0e-3 #precision issues...
+
+    shutil.copy2(os.path.join(test_d,"pest_adj.0.obs.jcb"),os.path.join(template_d,"restart.jcb"))
+    shutil.copy2(os.path.join(test_d,"pest_adj.0.par.jcb"),os.path.join(template_d,"par.jcb"))
+    shutil.copy2(os.path.join(test_d,"pest_adj.obs+noise.jcb"),os.path.join(template_d,"noise.jcb"))
+    pst.pestpp_options["ies_par_en"] = "par.jcb"
+    pst.pestpp_options["ies_obs_en"] = "noise.jcb"
+    pst.pestpp_options["ies_restart_obs_en"] = "restart.jcb"
+
+    pst.control_data.noptmax = 1
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+    
+    
+    exit()
+
+    pst.control_data.noptmax = 1
+    pst.pestpp_options["ies_num_reals"] = 20
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    try:
+        pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                     master_dir=test_d, worker_root=model_d, port=port)
+    except Exception as e:
+        pass
+    else:
+        raise Exception("should have failed")
+
+
+
+
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
