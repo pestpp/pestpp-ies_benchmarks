@@ -1800,6 +1800,9 @@ def tenpar_adjust_weights_test_by_real():
     #    f.write("og1,0.333333\n")
     #    f.write("og3,0.333333\n")
     #    f.write("og4,0.333333\n")
+    gdict = {}
+    for g in pst.nnz_obs_groups:
+        gdict[g] = obs.loc[obs.obgnme==g,"obsnme"].to_list()
 
     df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(12))
     df.loc[:,:] = 0.33333
@@ -1890,11 +1893,35 @@ def tenpar_adjust_weights_test_by_real():
     
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
                                  master_dir=test_d, worker_root=model_d, port=port)
-    
-    
+
+    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    assert os.path.exists(sumfile),sumfile
+    ogdf = pd.read_csv(sumfile)
+    adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    assert os.path.exists(adf_file)
+    adf = pd.read_csv(adf_file,index_col=0)
+    wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    ndf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_adj.obs+noise.jcb"))
+    odf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_adj.0.obs.jcb"))
+    print(wdf)
+    for real in odf.index:
+        n = ndf.loc[real,:]
+        o = odf.loc[real,:]
+        w = wdf.loc[real,:]
+        swr = (w * (n-o))**2
+        #print(swr)
+        for g,onames in gdict.items():
+            phi = swr.loc[onames].sum()
+            print(real,g,phi)
+
     exit()
 
     pst.control_data.noptmax = 1
+    pst.pestpp_options.pop("ies_obs_en")
+    pst.pestpp_options.pop("ies_restart_obs_en")
+    pst.pestpp_options.pop("ies_par_en")
+    
     pst.pestpp_options["ies_num_reals"] = 20
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
@@ -1905,8 +1932,6 @@ def tenpar_adjust_weights_test_by_real():
         pass
     else:
         raise Exception("should have failed")
-
-
 
 
 
