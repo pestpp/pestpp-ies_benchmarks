@@ -1163,18 +1163,25 @@ def multimodal_test():
     #pst.pestpp_options["lambda_scale_fac"] = 1.0
     pst.pestpp_options["ies_subset_size"] = 30
     pst.pestpp_options["ies_multimodal_alpha"] = 0.1
-    pst.pestpp_options["ies_verbose_level"] = 2
+    pst.pestpp_options["ies_verbose_level"] = 3
     pst.pestpp_options["ies_include_base"] = False
     pst.pestpp_options["ies_use_approx"] = True
     pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_num_threads"] = 3
 
     #pst.pestpp_options["ies_bad_phi_sigma"] = 1.25
     pst.pestpp_options["ies_use_mda"] = False
 
     #pst.pestpp_options["ies_no_noise"] = True
     pst.write(os.path.join(test_d, "mm1.pst"))
-    m_d = os.path.join(model_d, "master_mm_{0}".format(func))
+    m_d = os.path.join(model_d, "master_mm_{0}_mt".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
+    pst.pestpp_options["ies_num_threads"] = 1
+    pst.write(os.path.join(test_d, "mm1.pst"))
+    m_d = os.path.join(model_d, "master_mm_{0}_single".format(func))
+    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
 
     pst.pestpp_options["ies_multimodal_alpha"] = 1.0
     pst.write(os.path.join(test_d, "mm1.pst"))
@@ -1185,7 +1192,7 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
     import matplotlib.pyplot as plt
 
     base_d = os.path.join("mm1", "master_base_{0}".format(func))
-    mm_d = os.path.join("mm1", "master_mm_{0}".format(func))
+    mm_d = os.path.join("mm1", "master_mm_{0}_mt".format(func))
     pst = pyemu.Pst(os.path.join(base_d, "mm1.pst"))
     if noptmax is None:
         noptmax = pst.control_data.noptmax
@@ -1215,17 +1222,16 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
         pe_pr.index = pe_pr.index.map(lambda x: str(np.int(np.float(x))))
 
         if show_info and noptmax > 0:
-            mm_info_fname = [f for f in os.listdir(mm_d) if "mm1.{0}.".format(noptmax) in f and f.endswith(".mm.info.csv")][
-                0]
+            mm_info_fname = [f for f in os.listdir(mm_d) if "mm1.{0}.".format(noptmax) in f and f.endswith(".mm.info.csv")][0]
             print(mm_info_fname)
             mm_df = pd.read_csv(os.path.join(mm_d, mm_info_fname))
             mm_df.index = np.arange(mm_df.shape[0])
-            mm_df.loc[:, "real_name"] = mm_df.real_name.apply(lambda x: str(np.int(np.float(x))))
-            nei_cols = mm_df.columns[mm_df.columns.map(lambda x: x.startswith("nei"))]
+            mm_df.loc[:, "pe_real_name"] = mm_df.pe_real_name.apply(lambda x: str(np.int(np.float(x))))
+            nei_cols = mm_df.columns[mm_df.columns.map(lambda x: "neighbor" in x)]
             mm_rnames = set(pe_pr.index.tolist())
             df = mm_df.iloc[1, :]
             print(df)
-            mm_rname = df.real_name
+            mm_rname = df.pe_real_name
             neis = df.loc[nei_cols].apply(str)
             neis = neis.loc[neis.apply(lambda x: x in mm_rnames)]
             df = df.loc[neis.index]
@@ -1691,7 +1697,135 @@ def tenpar_adjust_weights_test():
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["ies_num_reals"] = 10
     pst.pestpp_options["save_binary"] = True
+    
+    
+    pst.pestpp_options['ies_verbose_level'] = 4
+    pst.pestpp_options["ies_bad_phi_sigma"] = -95
+
+    
+    pst.control_data.noptmax = 2
+    pst.pestpp_options["ies_drop_conflicts"] = False
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+
+    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    for oname,weight in zip(obs.obsnme,obs.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-6
+
+    wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    assert os.path.exists(adf_file)
+    adf = pd.read_csv(adf_file,index_col=0)
+    for oname,weight in zip(adf.index,adf.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+    
+    
     pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    pst.control_data.noptmax = 2
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+    
+    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    assert os.path.exists(adf_file)
+    adf = pd.read_csv(adf_file,index_col=0)
+
+    for oname,weight in zip(obs.index,obs.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+    
+    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    for oname,weight in zip(adf.index,adj.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+
+    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    assert os.path.exists(sumfile),sumfile
+    ogdf = pd.read_csv(sumfile)
+    phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"),index_col=0)
+    print(phidf.loc[0,"mean"])
+    print(ogdf.adjusted_phi.sum())
+    assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
+    assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
+
+    
+
+def tenpar_adjust_weights_test_by_real():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_adjust_weights_by_real")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+
+
+    obs = pst.observation_data
+    obs.loc[pst.obs_names[:4],"obgnme"] = "og1a"
+    obs.loc[pst.obs_names[:4],"weight"] = 10 + 3.*(np.random.random(4))
+    obs.loc[pst.obs_names[4:8],"obgnme"] = "og1b"
+    obs.loc[pst.obs_names[4:8],"weight"] = 5
+    obs.loc[pst.obs_names[8:12],"obgnme"] = "og3"
+    obs.loc[pst.obs_names[8:12],"weight"] = 1
+    obs.loc[pst.obs_names[12:],"obgnme"] = "og4"
+    obs.loc[pst.obs_names[12:],"weight"] = 0.00001
+    obs.loc[:,"standard_deviation"] = 0.1
+    #with open(os.path.join(template_d,"phi.csv"),'w') as f:
+    #    f.write("og1,0.333333\n")
+    #    f.write("og3,0.333333\n")
+    #    f.write("og4,0.333333\n")
+
+    df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(50))
+    df.loc[:,:] = 0.33333
+    df.loc[np.arange(10),["og1"]] = 0.9
+    df.loc[np.arange(10),["og3"]] = 0.05
+    df.loc[np.arange(10),["og4"]] = 0.05
+
+    df.loc[np.arange(10,20),["og1"]] = 0.05
+    df.loc[np.arange(10,20),["og3"]] = 0.9
+    df.loc[np.arange(10,20),["og4"]] = 0.05
+
+    df.loc[np.arange(10,20),["og1"]] = 0.05
+    df.loc[np.arange(10,20),["og3"]] = 0.05
+    df.loc[np.arange(10,20),["og4"]] = 0.09
+
+    df.to_csv(os.path.join(template_d,"phi.csv"))
+
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options["save_binary"] = True
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    pst.pestpp_options["ies_phi_factors_by_real"] = True
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options['ies_verbose_level'] = 4
     pst.pestpp_options["ies_bad_phi_sigma"] = -95
@@ -1709,16 +1843,35 @@ def tenpar_adjust_weights_test():
     phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"),index_col=0)
     print(phidf.loc[0,"mean"])
     print(ogdf.adjusted_phi.sum())
-    assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
-    assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
+    #assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
+    #assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
 
+    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    for oname,weight in zip(obs.index,obs.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+
+
+    wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    for oname,weight in zip(obs.index,obs.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() > 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) > 1.0e-3 #precision issues...
 
 
 if __name__ == "__main__":
-    freyberg_rcov_test()
+    #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
-    #tenpar_adjust_weights_test()
+    tenpar_adjust_weights_test()
+    tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
     #tenpar_xsec_autoadaloc_test()
     #tenpar_xsec_combined_autoadaloc_test()
@@ -1732,7 +1885,7 @@ if __name__ == "__main__":
     # freyberg_aal_test()
     # tenpar_high_phi_test()
     # freyberg_svd_draws_invest()
-
+    #tenpar_xsec_aal_sigma_dist_test()
     # freyberg_combined_aal_test()
     # freyberg_aal_invest()
     # tenpar_high_phi_test()

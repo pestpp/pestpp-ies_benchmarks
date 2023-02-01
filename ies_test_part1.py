@@ -149,7 +149,7 @@ def tenpar_full_cov_test():
     pst.pestpp_options["ies_num_reals"] = num_reals
     pst.pestpp_options["parcov_filename"] = "prior.cov"
     pst.pestpp_options["ies_verbose_level"] = 1
-    pst.pestpp_options["ies_num_threads"] = 2
+    pst.pestpp_options["ies_num_threads"] = 4
     pst.write(pst_name)
     pyemu.helpers.run(exe_path+" pest.pst",cwd=test_d)
 
@@ -176,6 +176,11 @@ def tenpar_full_cov_test():
     df_corr = df.apply(np.log10).corr().loc[p1, p2]
     diff = np.abs((pe_corr - df_corr) / pe_corr)
     assert diff < 0.25, "{0},{1},{2}".format(pe_corr, df_corr, diff)
+
+    pst.control_data.noptmax = 1
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.write(pst_name)
+    pyemu.helpers.run(exe_path+" pest.pst",cwd=test_d)
 
 
 def tenpar_subset_test():
@@ -2051,7 +2056,8 @@ if __name__ == "__main__":
     #test_chenoliver()
     # tenpar_narrow_range_test()
     #test_freyberg_ineq()
-    tenpar_fixed_test()
+    #tenpar_fixed_test()
+    tenpar_full_cov_test()
     #tenpar_fixed_test2()
     # tenpar_subset_how_test()
     # tenpar_localizer_test1()

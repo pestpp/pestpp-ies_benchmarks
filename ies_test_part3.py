@@ -948,9 +948,9 @@ def tenpar_xsec_autoadaloc_test():
 
 if __name__ == "__main__":
     #tenpar_base_run_test()
-    tenpar_xsec_autoadaloc_test()
-    tenpar_xsec_combined_autoadaloc_test()
-    tenpar_xsec_aal_sigma_dist_test()
+    #tenpar_xsec_autoadaloc_test()
+    #tenpar_xsec_combined_autoadaloc_test()
+    #tenpar_xsec_aal_sigma_dist_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
     #tenpar_by_vars_test()
@@ -960,4 +960,4 @@ if __name__ == "__main__":
     #clues_longnames_test()
     #freyberg_local_threads_test()
     #tenpar_tied_test()
-    #freyberg_dist_local_test()
+    freyberg_dist_local_test()
