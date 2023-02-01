@@ -865,6 +865,7 @@ def freyberg_rcov_test():
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options["ies_autoadaloc"] = True
     pst.pestpp_options["ies_save_rescov"] = True
+    pst.pestpp_options["ies_verbose_level"] = 4
     pst.control_data.nphinored = 20
     pst.control_data.noptmax = 2
     pst.write(os.path.join(template_d, "pest_rescov.pst"))
@@ -876,10 +877,10 @@ def freyberg_rcov_test():
     diff = np.abs(np.diag(org_rescov.x) - np.diag(shrunk_rescov.x))
     print(diff)
     assert diff.sum() < 1.0e-6, diff.sum()
-    shutil.copy2(os.path.join(test_d, "pest_rescov.2.res.cov"), os.path.join(template_d, "post_obs.cov"))
+    shutil.copy2(os.path.join(test_d, "pest_rescov.2.shrunk_res.cov"), os.path.join(template_d, "post_obs.cov"))
     pst.pestpp_options["obscov"] = "post_obs.cov"
     pst.pestpp_options["ies_drop_conflicts"] = False
-    pst.pestpp_options["ies_verbose_level"] = 4
+    
     pst.write(os.path.join(template_d, "pest_bmw.pst"))
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_bmw.pst", num_workers=8, master_dir=test_d,
                                  worker_root=model_d, port=port)
@@ -1867,6 +1868,8 @@ def tenpar_adjust_weights_test_by_real():
 
 
 if __name__ == "__main__":
+    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     #tenpar_base_run_test()
@@ -1892,7 +1895,6 @@ if __name__ == "__main__":
     # freyberg_center_on_test()
     #freyberg_pdc_test()
     # freyberg_rcov_tet()
-    #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     # freyberg_center_on_test()
     #tenpar_align_test()
     # tenpar_align_test_2()
