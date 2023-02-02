@@ -1344,7 +1344,7 @@ def zdt1_weight_test():
     pst.pestpp_options["ies_obs_en"] = "obs.csv"
     oe.to_csv(os.path.join(t_d, "obs.csv"))
 
-    pst.control_data.noptmax = 2
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(t_d,"zdt1_ies.pst"))
     m_d = os.path.join(model_d,"zdt1_master1_base")
     #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d)
@@ -1354,7 +1354,7 @@ def zdt1_weight_test():
     pst.pestpp_options["ies_lambda_mults"] = 1.0
     pst.pestpp_options["lambda_scale_fac"] = 1.0
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
-    pst.pestpp_options["ies_subset_size"] = num_reals
+    pst.pestpp_options["ies_subset_size"] = -15
     weights.to_csv(os.path.join(t_d, "weights.csv"))
     pst.write(os.path.join(t_d, "zdt1_ies.pst"))
     m_d = os.path.join(model_d, "zdt1_master1")
@@ -1362,6 +1362,11 @@ def zdt1_weight_test():
                                  master_dir=m_d)
     oe_file = os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(pst.control_data.noptmax))
     assert os.path.exists(oe_file)
+    oe = pd.read_csv(oe_file,index_col=0)
+    assert oe.loc[:,"obj_1"].min() < 0.2
+    assert oe.loc[:,"obj_2"].min() < 1.0
+    assert oe.loc[:,"obj_1"].max() > 0.8
+    assert oe.loc[:,"obj_2"].max() > 4.0
 
 def plot_zdt1_results(noptmax=None):
     m_d = os.path.join("zdt1","zdt1_master1")
@@ -1945,17 +1950,17 @@ def tenpar_adjust_weights_test_by_real():
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    
-    #freyberg_rcov_test()
-    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
-    #tenpar_base_run_test()
-    #tenpar_adjust_weights_test()
-    tenpar_adjust_weights_test_by_real()
+    #freyberg_center_on_test()
+    # freyberg_rcov_test()
+    # tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    # tenpar_base_run_test()
+    # tenpar_adjust_weights_test()
+    # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
-    #tenpar_xsec_autoadaloc_test()
-    #tenpar_xsec_combined_autoadaloc_test()
+    # tenpar_xsec_autoadaloc_test()
+    # tenpar_xsec_combined_autoadaloc_test()
     # tenpar_xsec_aal_sigma_dist_test()
-    #tenpar_by_vars_test()
+    # tenpar_by_vars_test()
     # tenpar_xsec_aal_invest()
     # temp()
     # tenpar_localize_how_test()
@@ -1980,8 +1985,8 @@ if __name__ == "__main__":
     #mm_invest()
     #plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
-    #zdt1_weight_test()
-    #plot_zdt1_results(10)
+    zdt1_weight_test()
+    #plot_zdt1_results(9)
     #tenpar_upgrade_on_disk_test_with_fixed()
     #tenpar_upgrade_on_disk_test_with_fixed2()
     #tenpar_high_phi_test()
