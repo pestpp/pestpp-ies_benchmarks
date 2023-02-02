@@ -6,7 +6,7 @@ pcf
    2.000000E+01  -3.000000E+00   3.000000E-01   1.000000E-02        -7
    1.000000E+01   1.000000E+01   1.000000E-03
    1.000000E-01
-         4   1.000000E-02         3         3   1.000000E-02         3
+        10   1.000000E-02         3         3   1.000000E-02         3
          0         0         0
 * singular value decomposition
          1
@@ -62,9 +62,10 @@ python forward_run.py
 ./obj.dat.ins ./obj.dat
 ++ies_par_en(par.csv)
 ++ies_obs_en(obs.csv)
+++ies_phi_factor_file(phi_facs.csv)
+++ies_phi_factors_by_real(True)
 ++ies_weights_en(weights.csv)
-++ies_multimodal_alpha(0.9)
+++ies_multimodal_alpha(0.2)
 ++ies_lambda_mults(1.0)
 ++lambda_scale_fac(1.0)
 ++panther_agent_freeze_on_fail(True)
-++ies_subset_size(-15)

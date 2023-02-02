@@ -908,7 +908,7 @@ if __name__ == "__main__":
     #eval_10par_xsec()
 
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    freyberg_localizer_test3()
+    #freyberg_localizer_test3()
     #full list of tests
     # tenpar_subset_test()
     # tenpar_full_cov_test()
@@ -941,7 +941,7 @@ if __name__ == "__main__":
     #tenpar_tied_test()
     #tenpar_by_vars_test()
 
-    #tenpar_restart_test()
-    #tenpar_par_restart_byvars_test()
-    #tenpar_restart_wo_noise_w_base_test()
-    #tenpar_restart_test_2()
+    tenpar_restart_test()
+    tenpar_par_restart_byvars_test()
+    tenpar_restart_wo_noise_w_base_test()
+    tenpar_restart_test_2()

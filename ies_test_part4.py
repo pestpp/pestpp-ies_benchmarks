@@ -1325,7 +1325,7 @@ def zdt1_weight_test():
     model_d = "zdt1"
     t_d = os.path.join(model_d,"zdt1_template")
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
-    num_reals = 100
+    num_reals = 200
     pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=num_reals)
     oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst,pyemu.Cov.from_observation_data(pst),num_reals=num_reals)
     for oname in pst.obs_names:
@@ -1343,29 +1343,55 @@ def zdt1_weight_test():
     pe.to_csv(os.path.join(t_d,"par.csv"))
     pst.pestpp_options["ies_obs_en"] = "obs.csv"
     oe.to_csv(os.path.join(t_d, "obs.csv"))
+    
+    df = pd.DataFrame(index=oe.index,columns=["obj_1","obj_2"])
+    #wseq = np.linspace(0.01,0.99,num_reals)
+    #df.loc[:,"obj_1"] = wseq
+    #df.loc[:,"obj_2"] = np.flipud(wseq)
+    
+    first_third = np.arange(0,int(num_reals/3))
+    middle_third = np.arange(int(first_third[-1]),int((num_reals*2)/3))
+    last_third = np.arange(int(middle_third[-1]),num_reals)
+    df.iloc[first_third,0] = 0.01
+    df.iloc[first_third,1] = 0.99
+    df.iloc[middle_third,0] = 0.5
+    df.iloc[middle_third,1] = 0.5
+    df.iloc[last_third,0] = 0.99
+    df.iloc[last_third,1] = 0.01
+    
+    
+    
+    
+    df.to_csv(os.path.join(t_d,"phi_facs.csv"))
+    
 
-    pst.control_data.noptmax = 4
-    pst.write(os.path.join(t_d,"zdt1_ies.pst"))
-    m_d = os.path.join(model_d,"zdt1_master1_base")
-    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d)
+    pst.control_data.noptmax = 10
 
+
+    # pst.write(os.path.join(t_d,"zdt1_ies.pst"))
+    # m_d = os.path.join(model_d,"zdt1_master1_base")
+    # pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d,
+    #     port=4200)
+
+    pst.pestpp_options["ies_phi_factor_file"] = "phi_facs.csv"
+    pst.pestpp_options["ies_phi_factors_by_real"] = True
     pst.pestpp_options["ies_weights_en"] = "weights.csv"
-    pst.pestpp_options["ies_multimodal_alpha"] = .90
+    pst.pestpp_options["ies_multimodal_alpha"] = .2
     pst.pestpp_options["ies_lambda_mults"] = 1.0
     pst.pestpp_options["lambda_scale_fac"] = 1.0
     pst.pestpp_options["panther_agent_freeze_on_fail"] = True
-    pst.pestpp_options["ies_subset_size"] = -15
+    #pst.pestpp_options["ies_subset_size"] = -20
     weights.to_csv(os.path.join(t_d, "weights.csv"))
     pst.write(os.path.join(t_d, "zdt1_ies.pst"))
     m_d = os.path.join(model_d, "zdt1_master1")
     pyemu.os_utils.start_workers(t_d, exe_path, "zdt1_ies.pst", num_workers=30, worker_root=model_d, verbose=True,
-                                 master_dir=m_d)
+                                 master_dir=m_d,port=4200)
     oe_file = os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(pst.control_data.noptmax))
     assert os.path.exists(oe_file)
     oe = pd.read_csv(oe_file,index_col=0)
     assert oe.loc[:,"obj_1"].min() < 0.2
     assert oe.loc[:,"obj_2"].min() < 1.0
-    assert oe.loc[:,"obj_1"].max() > 0.8
+    assert oe.loc[:,"obj_1"].max() > 0.5
     assert oe.loc[:,"obj_2"].max() > 4.0
 
 def plot_zdt1_results(noptmax=None):
@@ -1379,14 +1405,15 @@ def plot_zdt1_results(noptmax=None):
     import matplotlib.pyplot as plt
     fig,ax = plt.subplots(1,1,figsize=(5,5))
 
-    ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", label="prior")
-    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="multi-modal posterior")
-    ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard form posterior")
+    ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", alpha=0.5,label="prior")
+    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="fancy-sauce posterior")
+    ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard IES posterior")
     ax.legend(loc="upper right",fontsize=10)
     #ax.set_title("bi-objective zdt1 optimization benchmark",loc="left",fontsize=10)
     ax.tick_params(axis='both', which='major', labelsize=10)
     ax.set_xlabel("objective 1 (minimize)")
     ax.set_ylabel("objective 2 (minimize)")
+    ax.grid()
     plt.tight_layout()
     plt.savefig(os.path.join(m_d,"compare_{0}.png".format(noptmax)))
 
@@ -1928,7 +1955,6 @@ def tenpar_adjust_weights_test_by_real():
             print(real,g,phi,ophi,d)
             assert d < 1e-5
             
-    exit()
 
     pst.control_data.noptmax = 1
     pst.pestpp_options.pop("ies_obs_en")
@@ -1951,7 +1977,7 @@ def tenpar_adjust_weights_test_by_real():
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
-    # freyberg_rcov_test()
+    #freyberg_rcov_test()
     # tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
     # tenpar_adjust_weights_test()
@@ -1986,7 +2012,7 @@ if __name__ == "__main__":
     #plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
     zdt1_weight_test()
-    #plot_zdt1_results(9)
+    plot_zdt1_results(10)
     #tenpar_upgrade_on_disk_test_with_fixed()
     #tenpar_upgrade_on_disk_test_with_fixed2()
     #tenpar_high_phi_test()
