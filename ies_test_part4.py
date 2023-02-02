@@ -1913,8 +1913,16 @@ def tenpar_adjust_weights_test_by_real():
         #print(swr)
         for g,onames in gdict.items():
             phi = swr.loc[onames].sum()
-            print(real,g,phi)
-
+            #print(real,g,phi)
+            try:
+                ophi = ogdf.loc[ogdf.apply(lambda x: str(x.realization).upper() ==str(real).upper() and x.group.upper()==g.upper(),axis=1),"adjusted_phi"].values[0]
+            except Exception as e:
+                print('error',real,g,e)
+                continue
+            d = np.abs((phi-ophi)/phi)
+            print(real,g,phi,ophi,d)
+            assert d < 1e-5
+            
     exit()
 
     pst.control_data.noptmax = 1
