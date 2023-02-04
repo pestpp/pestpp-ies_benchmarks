@@ -1170,11 +1170,31 @@ def multimodal_test():
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["ies_num_threads"] = 3
 
+    
+
+
     #pst.pestpp_options["ies_bad_phi_sigma"] = 1.25
     pst.pestpp_options["ies_use_mda"] = False
 
     #pst.pestpp_options["ies_no_noise"] = True
     pst.write(os.path.join(test_d, "mm1.pst"))
+
+    if False:
+        par = pst.parameter_data
+        p1,p2 = par.parnme.iloc[0],par.parnme.iloc[1]
+        runs = {p1:[],p2:[]}
+        steps = 100
+        for i in np.linspace(par.parlbnd.iloc[0],par.parubnd.iloc[0],steps):
+            for j in np.linspace(par.parlbnd.iloc[1],par.parubnd.iloc[1],steps):
+                runs[p1].append(i)
+                runs[p2].append(j)
+
+        df = pd.DataFrame(runs)
+        df.to_csv(os.path.join(test_d,"sweep_in.csv"))
+        m_d = os.path.join(model_d, "master_sweep_{0}".format(func))
+        pyemu.os_utils.start_workers(test_d, exe_path.replace("ies","swp"), "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    
+
     m_d = os.path.join(model_d, "master_mm_{0}_mt".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
 
@@ -1188,6 +1208,33 @@ def multimodal_test():
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_base_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
+
+def plot_mm1_sweep_results():
+
+    import matplotlib.pyplot as plt
+
+    mm_d = os.path.join("mm1", "master_sweep_circle")
+    pst = pyemu.Pst(os.path.join(mm_d, "mm1.pst"))
+    pe = pd.read_csv(os.path.join(mm_d,"sweep_in.csv"))
+    oe = pd.read_csv(os.path.join(mm_d,"sweep_out.csv"))
+    pe.loc[:,"obj"] = oe.phi.values
+    X = pe.par1.values.reshape(100,100)
+    Y = pe.par2.values.reshape(100,100)
+    Z = oe.phi.values.reshape(100,100)
+
+    
+
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
+    surf = ax.plot_surface(X, Y, Z, cmap="jet",
+                       linewidth=0, antialiased=False,alpha=0.75)
+    ax.set_xlabel("par1")
+    ax.set_ylabel("par2")
+    ax.set_zlabel("phi")
+    plt.show()
+
+
+
 
 def plot_mm1_results(noptmax=None, func="circle", show_info=False):
     import matplotlib.pyplot as plt
@@ -1365,13 +1412,13 @@ def zdt1_weight_test():
     df.to_csv(os.path.join(t_d,"phi_facs.csv"))
     
 
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 15
 
 
-    # pst.write(os.path.join(t_d,"zdt1_ies.pst"))
-    # m_d = os.path.join(model_d,"zdt1_master1_base")
-    # pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d,
-    #     port=4200)
+    #pst.write(os.path.join(t_d,"zdt1_ies.pst"))
+    #m_d = os.path.join(model_d,"zdt1_master1_base")
+    #pyemu.os_utils.start_workers(t_d,exe_path,"zdt1_ies.pst",num_workers=30,worker_root=model_d, verbose=True,master_dir=m_d,
+    #    port=4200)
 
     pst.pestpp_options["ies_phi_factor_file"] = "phi_facs.csv"
     pst.pestpp_options["ies_phi_factors_by_real"] = True
@@ -1395,28 +1442,38 @@ def zdt1_weight_test():
     assert oe.loc[:,"obj_2"].max() > 4.0
 
 def plot_zdt1_results(noptmax=None):
+    import matplotlib.pyplot as plt
     m_d = os.path.join("zdt1","zdt1_master1")
     pst = pyemu.Pst(os.path.join(m_d,"zdt1_ies.pst"))
     if noptmax is None:
         noptmax = pst.control_data.noptmax
-    oe_pr = pd.read_csv(os.path.join(m_d,"zdt1_ies.0.obs.csv"),index_col=0)
-    oe_pt_base = pd.read_csv(os.path.join(m_d+"_base","zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
-    oe_pt = pd.read_csv(os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(noptmax)),index_col=0)
-    import matplotlib.pyplot as plt
-    fig,ax = plt.subplots(1,1,figsize=(5,5))
+    
+    for i in range(0,noptmax+1):
+        oe_pt_base = pd.read_csv(os.path.join(m_d+"_base","zdt1_ies.{0}.obs.csv".format(i)),index_col=0)
+        oe_pt = pd.read_csv(os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(i)),index_col=0)
+        oe_pr = pd.read_csv(os.path.join(m_d,"zdt1_ies.0.obs.csv"),index_col=0)
+        fig,ax = plt.subplots(1,1,figsize=(5,5))
 
-    ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", alpha=0.5,label="prior")
-    ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="fancy-sauce posterior")
-    ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard IES posterior")
-    ax.legend(loc="upper right",fontsize=10)
-    #ax.set_title("bi-objective zdt1 optimization benchmark",loc="left",fontsize=10)
-    ax.tick_params(axis='both', which='major', labelsize=10)
-    ax.set_xlabel("objective 1 (minimize)")
-    ax.set_ylabel("objective 2 (minimize)")
-    ax.grid()
-    plt.tight_layout()
-    plt.savefig(os.path.join(m_d,"compare_{0}.png".format(noptmax)))
+        ax.scatter(oe_pr.iloc[:,0],oe_pr.iloc[:,1], marker=".",c="0.5", alpha=0.5,label="prior")
+        ax.scatter(oe_pt.iloc[:, 0], oe_pt.iloc[:, 1], marker=".", c="b",label="fancy-sauce posterior")
+        ax.scatter(oe_pt_base.iloc[:, 0], oe_pt_base.iloc[:, 1], marker=".", c="m", label="standard IES posterior")
+        ax.legend(loc="upper right",fontsize=10)
+        #ax.set_title("bi-objective zdt1 optimization benchmark",loc="left",fontsize=10)
+        ax.tick_params(axis='both', which='major', labelsize=10)
+        ax.set_xlabel("obs group 1",fontsize=12)
+        ax.set_ylabel("obs group  2",fontsize=12)
+        ax.set_xlim(0,1)
+        ax.set_ylim(0,7)
+        ax.set_title("iteration: {0}".format(i),loc="left",fontsize=12)
+        ax.grid()
+        plt.tight_layout()
+        plt.savefig(os.path.join(m_d,"compare_{0:03d}.png".format(i)))
+        plt.close(fig)
+    fps = 3
 
+    pyemu.os_utils.run("ffmpeg -y -i compare_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=m_d)
+    pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i compare_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" -final_delay 150 logo.gif".format(fps),
+            cwd=m_d)
 
 
 def tenpar_upgrade_on_disk_test_with_fixed():
@@ -2009,10 +2066,12 @@ if __name__ == "__main__":
     #tenpar_upgrade_on_disk_test()
     #multimodal_test()
     #mm_invest()
+    #plot_mm1_sweep_results()
     #plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
     zdt1_weight_test()
-    plot_zdt1_results(10)
+    #plot_zdt1_results(15)
+    
     #tenpar_upgrade_on_disk_test_with_fixed()
     #tenpar_upgrade_on_disk_test_with_fixed2()
     #tenpar_high_phi_test()
