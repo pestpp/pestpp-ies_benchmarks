@@ -456,7 +456,7 @@ def tenpar_restart_binary_test():
 
     assert os.path.exists(os.path.join(test_d, "pest_restart.phi.group.csv"))
     df = pd.read_csv(os.path.join(test_d, "pest_restart.phi.group.csv"))
-    diff = df.obs_realization.apply(np.int) - df.par_realization.apply(np.int)
+    diff = df.obs_realization.apply(int) - df.par_realization.apply(int)
     assert diff.max() == 0, diff
 
     pst.pestpp_options["ies_par_en"] = "pest_restart.0.par.jcb"
