@@ -1238,6 +1238,7 @@ def plot_mm1_sweep_results():
 
 def plot_mm1_results(noptmax=None, func="circle", show_info=False):
     import matplotlib.pyplot as plt
+    from matplotlib.patches import Circle
 
     base_d = os.path.join("mm1", "master_base_{0}".format(func))
     mm_d = os.path.join("mm1", "master_mm_{0}_mt".format(func))
@@ -1266,15 +1267,15 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
                                                             df=pd.read_csv(fname.replace(".par.", ".obs."), index_col=0))
         mm_pv = oe_pt_mm.phi_vector
         pe_pr = pd.read_csv(os.path.join(mm_d, "mm1.0.par.csv"))
-        pe_pt_mm.index = pe_pt_mm.index.map(lambda x: str(np.int(np.float(x))))
-        pe_pr.index = pe_pr.index.map(lambda x: str(np.int(np.float(x))))
+        pe_pt_mm.index = pe_pt_mm.index.map(lambda x: str(int(np.float(x))))
+        pe_pr.index = pe_pr.index.map(lambda x: str(int(np.float(x))))
 
         if show_info and noptmax > 0:
             mm_info_fname = [f for f in os.listdir(mm_d) if "mm1.{0}.".format(noptmax) in f and f.endswith(".mm.info.csv")][0]
             print(mm_info_fname)
             mm_df = pd.read_csv(os.path.join(mm_d, mm_info_fname))
             mm_df.index = np.arange(mm_df.shape[0])
-            mm_df.loc[:, "pe_real_name"] = mm_df.pe_real_name.apply(lambda x: str(np.int(np.float(x))))
+            mm_df.loc[:, "pe_real_name"] = mm_df.pe_real_name.apply(lambda x: str(int(np.float(x))))
             nei_cols = mm_df.columns[mm_df.columns.map(lambda x: "neighbor" in x)]
             mm_rnames = set(pe_pr.index.tolist())
             df = mm_df.iloc[1, :]
@@ -1307,9 +1308,16 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
         axes[1].set_ylabel("par2")
         axes[1].set_xlabel("par1")
 
+        c = Circle([0,0],1,edgecolor="r",facecolor="none")
+        axes[1].add_patch(c)
+        
         axes[0].scatter(pe_pr.par1.values, pe_pr.par2.values, marker=".", color="0.5", alpha=0.5)
         if noptmax != 0:
             axes[0].scatter(pe_pt_base.par1.values, pe_pt_base.par2.values, marker=".", c="b", alpha=0.5)
+
+        c = Circle([0,0],1,edgecolor="r",facecolor="none")
+        axes[0].add_patch(c)
+
 
         axes[0].set_title("unimodal upgrade")
         axes[0].set_ylabel("par2")
@@ -1768,9 +1776,9 @@ def tenpar_adjust_weights_test():
     obs.loc[pst.obs_names[:4],"weight"] = 10 + 3.*(np.random.random(4))
     obs.loc[pst.obs_names[4:8],"obgnme"] = "og1b"
     obs.loc[pst.obs_names[4:8],"weight"] = 5
-    obs.loc[pst.obs_names[8:12],"obgnme"] = "og3"
+    obs.loc[pst.obs_names[8:12],"obgnme"] = "og3blahblah"
     obs.loc[pst.obs_names[8:12],"weight"] = 1
-    obs.loc[pst.obs_names[12:],"obgnme"] = "og4"
+    obs.loc[pst.obs_names[12:],"obgnme"] = "og4yadayada"
     obs.loc[pst.obs_names[12:],"weight"] = 0.00001
     obs.loc[:,"standard_deviation"] = 0.1
     with open(os.path.join(template_d,"phi.csv"),'w') as f:
@@ -2037,7 +2045,7 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     # tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
-    # tenpar_adjust_weights_test()
+    tenpar_adjust_weights_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
@@ -2069,7 +2077,7 @@ if __name__ == "__main__":
     #plot_mm1_sweep_results()
     #plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
-    zdt1_weight_test()
+    #zdt1_weight_test()
     #plot_zdt1_results(15)
     
     #tenpar_upgrade_on_disk_test_with_fixed()
