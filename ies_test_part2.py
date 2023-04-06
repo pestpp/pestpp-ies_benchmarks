@@ -627,7 +627,7 @@ def tenpar_par_restart_test():
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_restart.pst", num_workers=10,
                                 worker_root=model_d, master_dir=test_d, port=port)
     phi_df2 = pd.read_csv(os.path.join(test_d, "pest_restart.phi.actual.csv"),index_col=0)
-    diff = (phi_df1 - phi_df2).apply(np.abs)
+    diff = (phi_df1 - phi_df2).apply(lambda x: np.abs(x))
     print(diff.max())
     assert diff.max().max()==0.0,diff.max().max()
 
@@ -708,7 +708,7 @@ def tenpar_par_restart_byvars_test():
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_restart.pst", num_workers=10,
                                 worker_root=model_d, master_dir=test_d, port=port)
     phi_df2 = pd.read_csv(os.path.join(test_d, "pest_restart.phi.actual.csv"),index_col=0)
-    diff = (phi_df1 - phi_df2).apply(np.abs)
+    diff = (phi_df1 - phi_df2).apply(lambda x: np.abs(x))
     print(diff.max())
     assert diff.max().max()==0.0,diff.max().max()
 

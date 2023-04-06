@@ -172,8 +172,8 @@ def tenpar_full_cov_test():
     df.columns = [c.lower() for c in df.columns]
 
     p1, p2 = pst.adj_par_names
-    pe_corr = pe.apply(np.log10).corr().loc[p1, p2]
-    df_corr = df.apply(np.log10).corr().loc[p1, p2]
+    pe_corr = pe.apply(lambda x: np.log10(x)).corr().loc[p1, p2]
+    df_corr = df.apply(lambda x: np.log10(x)).corr().loc[p1, p2]
     diff = np.abs((pe_corr - df_corr) / pe_corr)
     assert diff < 0.25, "{0},{1},{2}".format(pe_corr, df_corr, diff)
 
@@ -223,7 +223,7 @@ def tenpar_subset_test():
     pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=15,
                                worker_root=model_d, master_dir=test_d,port=port)
     df_sub = pd.read_csv(os.path.join(test_d, "pest.phi.meas.csv"),index_col=0)
-    diff = (df_sub - df_base).apply(np.abs)
+    diff = (df_sub - df_base).apply(lambda x: np.abs(x))
     diff = diff.iloc[:,6:]
     print(diff.max())
     print(df_sub.iloc[-1,:])
@@ -303,9 +303,9 @@ def test_freyberg_full_cov():
     # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10,
     #                            worker_root=model_d, master_dir=test_d)
     pyemu.helpers.run(exe_path+" pest.pst",cwd=test_d)
-    df = pd.read_csv(os.path.join(test_d, "pest.0.par.csv"), index_col=0).apply(np.log10)
+    df = pd.read_csv(os.path.join(test_d, "pest.0.par.csv"), index_col=0).apply(lambda x: np.log10(x))
     df.columns = [c.lower() for c in df.columns]
-    pe = pe.apply(np.log10)
+    pe = pe.apply(lambda x: np.log10(x))
     pe_corr = pe.corr()
     df_corr = df.corr()
 
@@ -412,9 +412,9 @@ def test_freyberg_full_cov_reorder():
     # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10,
     #                            worker_root=model_d, master_dir=test_d)
     pyemu.helpers.run(exe_path+" pest.pst",cwd=test_d)
-    df = pd.read_csv(os.path.join(test_d, "pest.0.par.csv"), index_col=0).apply(np.log10)
+    df = pd.read_csv(os.path.join(test_d, "pest.0.par.csv"), index_col=0).apply(lambda x: np.log10(x))
     df.columns = [c.lower() for c in df.columns]
-    pe = pe._df.apply(np.log10)
+    pe = pe._df.apply(lambda x: np.log10(x))
     #print('corr')
     #pe_corr = pe.corr()
     #df_corr = df.corr()
@@ -494,8 +494,8 @@ def invest():
     df2 = pd.read_csv(os.path.join(d,"pyemu_pe.csv"), index_col=0)
     df1.columns = [c.lower() for c in df1.columns]
 
-    df1 = df1.apply(np.log10)
-    df2 = df2.apply(np.log10)
+    df1 = df1.apply(lambda x: np.log10(x))
+    df2 = df2.apply(lambda x: np.log10(x))
 
     for p in df1.columns:
         print(p)
@@ -829,7 +829,7 @@ def tenpar_fixed_test():
             #df = df.iloc[:-1,:]
             #df.index = pe.index
             diff = pe.loc[df.index,fixed_pars] - df
-            assert diff.apply(np.abs).sum().sum() < 0.01, diff
+            assert diff.apply(lambda x: np.abs(x)).sum().sum() < 0.01, diff
 
     pst.pestpp_options["ies_par_en"] = "par_fixed.csv"
     pst.pestpp_options["ies_lambda_mults"] = 1.0
@@ -859,7 +859,7 @@ def tenpar_fixed_test():
     pe1 = pyemu.ParameterEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_fixed.0.par.jcb"))
     #pe1.index = pe.index
     diff = pe - pe1
-    assert np.abs(diff.apply(np.abs).sum().sum()) < 1.0e-6,diff
+    assert np.abs(diff.apply(lambda x: np.abs(x)).sum().sum()) < 1.0e-6,diff
 
 # jwhite - disable for now until more testing in the weights stuff
 # def tenpar_weights_test():
@@ -1204,7 +1204,7 @@ def tenpar_localizer_test2():
         diff = np.abs(par_df1.loc[:,par] - pe.loc[:,par])
         print(diff.sum())
         assert diff.sum() < 1.0e-3, diff.sum()
-    diff = (phi_df1 - phi_df2).apply(np.abs)
+    diff = (phi_df1 - phi_df2).apply(lambda x: np.abs(x))
     print(diff.max().max())
     assert diff.max().max() <  1.0e-3, diff.max().max()
 
@@ -1430,7 +1430,7 @@ def tenpar_localizer_test3():
         diff = par_df1.loc[:, par] - par_df2.loc[:, par]
         print(diff)
         print(diff.sum())
-        diff = (par_df1.loc[:, par] - pe.loc[:, par]).apply(np.abs)
+        diff = (par_df1.loc[:, par] - pe.loc[:, par]).apply(lambda x: np.abs(x))
         print(diff.sum())
         #assert diff.max() < 1e-4
     diff = np.abs(phi_df1.loc[:,"mean"] - phi_df2.loc[:,"mean"])
@@ -1492,7 +1492,7 @@ def tenpar_restart_similar_test():
 
     phi2_df = pd.read_csv(os.path.join(test_d, "pest.phi.actual.csv"))
 
-    d = (phi1_df.iloc[:,2:] - phi2_df.iloc[:,2:]).apply(np.abs)
+    d = (phi1_df.iloc[:,2:] - phi2_df.iloc[:,2:]).apply(lambda x: np.abs(x))
     print(d)
     print(d.max())
     print(d.max().max())
@@ -2030,6 +2030,109 @@ def tenpar_localizer_pdc_pargroup_forgive_test():
         assert phi_df1.loc[phi_df1.index[-1], "mean"] < phi_df1.loc[phi_df1.index[0], "mean"]
 
 
+def tenpar_localizer_incomplete_test():
+    model_d = "ies_10par_xsec"
+    template_d = os.path.join(model_d, "test_template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+    # spike one of the obs...
+
+    obs = pst.observation_data
+    obs.loc[:, "weight"] = 1.0
+    first = pst.obs_names[:4]
+    second = pst.obs_names[4:]
+    obs.loc[first, "obgnme"] = "group1"
+    obs.loc[second, "obgnme"] = "group2"
+
+    cov = pyemu.Cov.from_parameter_data(pst)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst, cov=cov, num_reals=10)
+    pe.enforce()
+
+    oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=10)
+    final_phis = []
+    for out_ext in [".mat", ".csv", ".jcb"]:
+        test_d = os.path.join(model_d, "master_localizer_inc_test_{0}".format(out_ext.replace('.', '')))
+        if os.path.exists(test_d):
+            shutil.rmtree(test_d)
+        # shutil.copytree(template_d, test_d)
+
+        pe.to_csv(os.path.join(template_d, "par_local.csv"))
+        oe.to_csv(os.path.join(template_d, "obs_local.csv"))
+
+        pst_name = os.path.join(template_d, "pest.pst")
+        pst = pyemu.Pst(pst_name)
+        # spike one of the obs...
+        obs = pst.observation_data
+        obs.loc[:,"weight"] = 1.0
+        first = pst.obs_names[:4]
+        second = pst.obs_names[4:]
+        obs.loc[first,"obgnme"] = "group1"
+        obs.loc[second, "obgnme"] = "group2"
+
+        obs.loc[first, "obsval"] += 100
+
+        par = pst.parameter_data
+        par.loc[pst.adj_par_names[:4], "pargp"] = "group1"
+        par.loc[pst.adj_par_names[4:], "pargp"] = "group2"
+
+        # mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
+        pnames = [pst.adj_par_names[0],pst.adj_par_names[1]]
+        mat = pyemu.Matrix.from_names(["group1","group2"], pnames).to_dataframe()
+        mat.loc[:, :] = 0.0
+        mat.loc["group1",pnames[0]] = 1.0
+        mat.loc["group2",pnames[1]] = 1.0
+
+        # mat.iloc[0,:] = 1
+        loc_name = "localizer" + out_ext
+
+        if out_ext == ".mat":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_ascii(os.path.join(template_d, loc_name))
+        elif out_ext == ".csv":
+            mat.to_csv(os.path.join(template_d, loc_name))
+        elif out_ext == ".jcb":
+            mat = pyemu.Matrix.from_dataframe(mat)
+            mat.to_binary(os.path.join(template_d, loc_name))
+
+        pst.pestpp_options = {}
+        pst.pestpp_options["ies_num_reals"] = 10
+        pst.pestpp_options["ies_localizer"] = loc_name
+        pst.pestpp_options["ies_lambda_mults"] = 1.0
+        pst.pestpp_options["lambda_scale_fac"] = 1.0
+        pst.pestpp_options["ies_subset_size"] = 11
+        pst.pestpp_options["ies_par_en"] = "par_local.csv"
+        pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
+        pst.pestpp_options["ies_drop_conflicts"] = False
+        pst.pestpp_options["ies_verbose_level"] = 4
+        pst.pestpp_options["ies_localizer_forgive_missing"] = True
+        pst.pestpp_options["ies_save_lambda_en"] = True
+        pst.control_data.noptmax = 2
+
+        # pst.pestpp_options["ies_verbose_level"] = 3
+        pst_name = os.path.join(template_d, "pest_local_inc.pst")
+        pst.write(pst_name)
+        pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_inc.pst", num_workers=10,
+                                     master_dir=test_d, verbose=True, worker_root=model_d,
+                                     port=port)
+        phi_df1 = pd.read_csv(os.path.join(test_d, "pest_local_inc.phi.meas.csv"))
+        assert phi_df1.shape[0] == pst.control_data.noptmax + 1
+        assert phi_df1.loc[phi_df1.index[-1], "mean"] < phi_df1.loc[phi_df1.index[0], "mean"]
+        mat = pyemu.Matrix.from_ascii(os.path.join(test_d, "initialized_localizer.mat"))
+        #assert mat.shape == (1, 2)
+        print(mat)
+        pr_pe = pd.read_csv(os.path.join(test_d,"pest_local_inc.0.par.csv"),index_col=0)
+        lam_pe_file = [f for f in os.listdir(test_d) if "lambda" in f and "scale" in f and f.endswith(".par.csv") and f.startswith("pest_local_inc.1.")]
+        print(lam_pe_file)
+        assert len(lam_pe_file) == 1
+        lam_pe = pd.read_csv(os.path.join(test_d,lam_pe_file[0]),index_col=0)
+        other_pnames = [n for n in pst.par_names if n not in pnames]
+        d = pr_pe.loc[:,other_pnames].values - lam_pe.loc[:,other_pnames].values
+        print(np.abs(d).max())
+        assert np.abs(d).max() < 1.0e-5
+
 
 
 if __name__ == "__main__":
@@ -2037,8 +2140,8 @@ if __name__ == "__main__":
     #tenpar_restart_similar_test2()
     #tenpar_localizer_pdc_test()
     #tenpar_localizer_pdc_obsgroup_test()
-    #tenpar_localizer_pdc_obsgroup_forgive_test()
     #tenpar_localizer_pdc_pargroup_forgive_test()
+    tenpar_localizer_incomplete_test()
     
     # full list of tests
     #tenpar_subset_test()
@@ -2057,7 +2160,7 @@ if __name__ == "__main__":
     # tenpar_narrow_range_test()
     #test_freyberg_ineq()
     #tenpar_fixed_test()
-    tenpar_full_cov_test()
+    #tenpar_full_cov_test()
     #tenpar_fixed_test2()
     # tenpar_subset_how_test()
     # tenpar_localizer_test1()

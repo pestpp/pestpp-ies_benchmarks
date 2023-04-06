@@ -161,14 +161,14 @@ def freyberg_dist_local_test():
     def compare_par_summary():
         pe_base = pd.read_csv(os.path.join(test_d,"pest_local.0.par.csv"),index_col=0)
         pe_base.columns = pe_base.columns.str.lower()
-        pe_base.loc[:,pt] = pe_base.loc[:,pt].apply(np.log10)
+        pe_base.loc[:,pt] = pe_base.loc[:,pt].apply(lambda x: np.log10(x))
         par_csvs = [f for f in os.listdir(test_d) if ".par.csv" in f and not "0.par.csv" in f]
         base_mean = pe_base.mean(axis=0)
         base_std = pe_base.std(axis=0)
         for par_csv in par_csvs:
             pe = pd.read_csv(os.path.join(test_d,par_csv),index_col=0)
             pe.columns = pe.columns.str.lower()
-            pe.loc[:,pt] = pe.loc[:,pt].apply(np.log10)
+            pe.loc[:,pt] = pe.loc[:,pt].apply(lambda x: np.log10(x))
             for grp in pst.par_groups:
                 pnames = par.loc[par.pargp==grp,"parnme"]
                 mean = pe.loc[:,pnames].mean(axis=0)
@@ -393,7 +393,7 @@ def freyberg_dist_local_invest():
         diff = par_df_org - par_df
         # print(diff.loc[:,zero_cond_pars].max(axis=1))
         #assert diff.loc[:, zero_cond_pars].max().max() < 1.0e-6, diff.loc[:, zero_cond_pars].max().max()
-        dsum = diff.apply(np.abs).sum().loc[par_adj.index]
+        dsum = diff.apply(lambda x: np.abs(x)).sum().loc[par_adj.index]
         d_arr = np.zeros((m.nrow, m.ncol))
         d_arr[par_adj.i, par_adj.j] = dsum
         d_arr[d_arr == 0.0] = np.NaN
@@ -677,11 +677,11 @@ def freyberg_local_threads_test():
 
     for d in [test_d + "_1thread",test_d+"_10thread"]:
         phi, dfs = get_results(d)
-        phi_diff = (base_phi - phi).apply(np.abs)
+        phi_diff = (base_phi - phi).apply(lambda x: np.abs(x))
         assert phi_diff.max().max() == 0.0, phi_diff.max()
         for f, df in base_dfs.items():
             assert f in dfs, f
-            diff = (df - dfs[f]).apply(np.abs)
+            diff = (df - dfs[f]).apply(lambda x: np.abs(x))
             assert diff.max().max() == 0.0, diff.max()
 
 
@@ -834,8 +834,8 @@ def tenpar_by_vars_test():
     pe2 = pd.read_csv(os.path.join(test_d,"pest_vars.2.par.csv"),index_col=0).T
     pe2.index = pe1.index
     diff = pe2 - pe1
-    print(diff.apply(np.abs).max())
-    assert diff.apply(np.abs).max().max() == 0.0
+    print(diff.apply(lambda x: np.abs(x)).max())
+    assert diff.apply(lambda x: np.abs(x)).max().max() == 0.0
 
     shutil.copy2(os.path.join(test_d,"pest_vars.0.par.csv"),os.path.join(template_d,"restart_by_vars.par.csv"))
     shutil.copy2(os.path.join(test_d, "pest_vars.obs+noise.csv"), os.path.join(template_d, "restart_by_vars.obs.csv"))
@@ -855,8 +855,8 @@ def tenpar_by_vars_test():
     pe2 = pd.read_csv(os.path.join(test_d, "pest_vars.2.par.csv"), index_col=0).T
     pe2.index = pe1.index
     diff = pe2 - pe1
-    print(diff.apply(np.abs).max())
-    assert diff.apply(np.abs).max().max() < 1.0e-3
+    print(diff.apply(lambda x: np.abs(x)).max())
+    assert diff.apply(lambda x: np.abs(x)).max().max() < 1.0e-3
     with pd.option_context('display.precision', 12):
         print(pe2.loc[:,fnames])
         d = 1000000. * np.abs(pe2.loc[:,fnames] - fval) / fval

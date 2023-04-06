@@ -437,8 +437,8 @@ def freyberg_combined_aal_test():
          zero_cond_pars]
 
     diff = pr - pt
-    print(diff.apply(np.abs).max().max())
-    assert diff.apply(np.abs).max().max() == 0.0
+    print(diff.apply(lambda x: np.abs(x)).max().max())
+    assert diff.apply(lambda x: np.abs(x)).max().max() == 0.0
 
 
 def freyberg_aal_invest():
@@ -478,13 +478,13 @@ def freyberg_aal_invest():
                 # continue
                 i = int(obs[6:8])
                 j = int(obs[9:11])
-            tcc_obs = tcc.loc[obs, :].apply(np.abs)
-            jco_obs = jco.loc[obs, :].apply(np.abs)
+            tcc_obs = tcc.loc[obs, :].apply(lambda x: np.abs(x))
+            jco_obs = jco.loc[obs, :].apply(lambda x: np.abs(x))
             print(tcc_obs)
             arr_cc = np.zeros((m.nrow, m.ncol))
             arr_jco = np.zeros((m.nrow, m.ncol))
 
-            tcc_obs2 = tcc2.loc[obs, :].apply(np.abs)
+            tcc_obs2 = tcc2.loc[obs, :].apply(lambda x: np.abs(x))
             arr_cc2 = np.zeros((m.nrow, m.ncol))
 
             for n, v, v2 in zip(tcc_obs.index, tcc_obs.values, tcc_obs2.values):
@@ -785,7 +785,7 @@ def freyberg_pdc_test():
     assert os.path.exists(phi_csv), phi_csv
     base_phi = pd.read_csv(phi_csv, index_col=0)
     assert base_phi.shape[0] == pst.control_data.noptmax + 1
-    diff = (pdc_phi - base_phi).apply(np.abs)
+    diff = (pdc_phi - base_phi).apply(lambda x: np.abs(x))
     print(diff.max())
     assert diff.max().max() < 0.1, diff.max().max()
 
@@ -1033,7 +1033,7 @@ def tenpar_covloc_test():
     pyemu.os_utils.start_workers(template_d, exe_path, "pest_covloc.pst", num_workers=8, master_dir=test_d,
                                  worker_root=model_d, port=port)
     phi2 = pd.read_csv(os.path.join(test_d, "pest_covloc.phi.actual.csv"), index_col=0)
-    d = (phi1.iloc[:, 2:] - phi2.iloc[:, 2:]).apply(np.abs)
+    d = (phi1.iloc[:, 2:] - phi2.iloc[:, 2:]).apply(lambda x: np.abs(x))
     print(d)
     print(d.max())
     assert d.max().max() < 1.0e-3, d.max().max()
@@ -1089,17 +1089,17 @@ def tenpar_upgrade_on_disk_test():
     oe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.obs.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
 
-    d = (phi1 - phi2).apply(np.abs)
+    d = (phi1 - phi2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (pe1 - pe2).apply(np.abs)
+    d = (pe1 - pe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (oe1 - oe2).apply(np.abs)
+    d = (oe1 - oe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
@@ -1539,17 +1539,17 @@ def tenpar_upgrade_on_disk_test_with_fixed():
     oe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.obs.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
 
-    d = (phi1 - phi2).apply(np.abs)
+    d = (phi1 - phi2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (pe1 - pe2).apply(np.abs)
+    d = (pe1 - pe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (oe1 - oe2).apply(np.abs)
+    d = (oe1 - oe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
@@ -1614,17 +1614,17 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
     oe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.obs.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
 
-    d = (phi1 - phi2).apply(np.abs)
+    d = (phi1 - phi2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (pe1 - pe2).apply(np.abs)
+    d = (pe1 - pe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
 
-    d = (oe1 - oe2).apply(np.abs)
+    d = (oe1 - oe2).apply(lambda x: np.abs(x))
     print(d.max())
     print(d.max().max())
     assert d.max().max() < 1.0e-6
