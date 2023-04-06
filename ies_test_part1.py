@@ -2109,6 +2109,7 @@ def tenpar_localizer_incomplete_test():
         pst.pestpp_options["ies_verbose_level"] = 4
         pst.pestpp_options["ies_localizer_forgive_missing"] = True
         pst.pestpp_options["ies_save_lambda_en"] = True
+        pst.pestpp_options["ies_autoadaloc"] = True
         pst.control_data.noptmax = 2
 
         # pst.pestpp_options["ies_verbose_level"] = 3
@@ -2124,7 +2125,7 @@ def tenpar_localizer_incomplete_test():
         #assert mat.shape == (1, 2)
         print(mat)
         pr_pe = pd.read_csv(os.path.join(test_d,"pest_local_inc.0.par.csv"),index_col=0)
-        lam_pe_file = [f for f in os.listdir(test_d) if "lambda" in f and "scale" in f and f.endswith(".par.csv") and f.startswith("pest_local_inc.1.")]
+        lam_pe_file = [f for f in os.listdir(test_d) if "lambda" in f and "scale" in f and f.endswith(".par.csv") and f.startswith("pest_local_inc.2.")]
         print(lam_pe_file)
         assert len(lam_pe_file) == 1
         lam_pe = pd.read_csv(os.path.join(test_d,lam_pe_file[0]),index_col=0)
