@@ -2038,6 +2038,83 @@ def tenpar_adjust_weights_test_by_real():
         raise Exception("should have failed")
 
 
+def tenpar_drop_violations_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_drop_violations")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+
+
+    obs = pst.observation_data
+    obs.loc[:,"drop_violations"] = False
+
+    obs.loc[pst.obs_names[0],"obgnme"] = "less_than"
+    obs.loc[pst.obs_names[1],"obgnme"] = "less_than"
+    obs.loc[pst.obs_names[0],"weight"] = 1.0
+    obs.loc[pst.obs_names[1],"weight"] = 1.0
+    obs.loc[pst.obs_names[1],"obgnme"] = "less_than"
+    obs.loc[pst.obs_names[1],"drop_violations"] = True
+    obs.loc[pst.obs_names[2],"weight"] = 0.0
+    obs.loc[pst.obs_names[2],"obgnme"] = "less_than"
+    obs.loc[pst.obs_names[2],"drop_violations"] = True
+    obs.loc[pst.obs_names[2],"obsval"] = -10000.0
+
+
+    obs.loc[pst.obs_names[-1],"obgnme"] = "greater_than"
+    obs.loc[pst.obs_names[-1],"weight"] = 1.0
+    obs.loc[pst.obs_names[-2],"weight"] = 1.0
+    obs.loc[pst.obs_names[-2],"obgnme"] = "greater_than"
+    obs.loc[pst.obs_names[-2],"drop_violations"] = True
+    obs.loc[pst.obs_names[-3],"weight"] = 0.0
+    obs.loc[pst.obs_names[-3],"obgnme"] = "greater_than"
+    obs.loc[pst.obs_names[-3],"drop_violations"] = True
+    obs.loc[pst.obs_names[-3],"obsval"] = 100000
+
+
+
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
+    pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["ies_upgrades_in_memory"] = False
+    pst.pestpp_options["ies_num_reals"] = 20
+    pst.pestpp_options["save_binary"] = False
+    
+    
+    pst.pestpp_options['ies_verbose_level'] = 4
+    pst.pestpp_options["ies_bad_phi_sigma"] = -95
+
+    
+    pst.control_data.noptmax = 4
+    pst.pestpp_options["ies_drop_conflicts"] = False
+    pst_name = "pest_viol.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+
+
+    for i in range(1,pst.control_data.noptmax+1):
+        oe = pd.read_csv(os.path.join(test_d,"pest_viol.{0}.obs.csv".format(i)),index_col=0)
+        oe = oe.loc[oe.index.map(lambda x: x != "base"),:]
+        print(oe.loc[:,pst.obs_names[1]],obs.loc[pst.obs_names[1],"obsval"])
+        assert np.all(oe.loc[:,pst.obs_names[1]]<obs.loc[pst.obs_names[1],"obsval"])
+        print(oe.loc[:,pst.obs_names[-2]],obs.loc[pst.obs_names[-2],"obsval"])
+        assert np.all(oe.loc[:,pst.obs_names[-2]]>obs.loc[pst.obs_names[-2],"obsval"])
+
+        print(oe.loc[:,pst.obs_names[2]],obs.loc[pst.obs_names[2],"obsval"])
+        assert np.any(oe.loc[:,pst.obs_names[2]]>=obs.loc[pst.obs_names[2],"obsval"])
+        print(oe.loc[:,pst.obs_names[-3]],obs.loc[pst.obs_names[-3],"obsval"])
+        assert np.any(oe.loc[:,pst.obs_names[-3]]<=obs.loc[pst.obs_names[-3],"obsval"])
+
+
+
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
@@ -2045,7 +2122,8 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     # tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
+    tenpar_drop_violations_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
