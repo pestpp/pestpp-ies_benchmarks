@@ -2061,7 +2061,7 @@ def tenpar_drop_violations_test():
     obs.loc[pst.obs_names[1],"weight"] = 1.0
     obs.loc[pst.obs_names[1],"obgnme"] = "less_than"
     obs.loc[pst.obs_names[1],"drop_violations"] = True
-    obs.loc[pst.obs_names[2],"weight"] = 0.0
+    obs.loc[pst.obs_names[2],"weight"] = 1.0
     obs.loc[pst.obs_names[2],"obgnme"] = "less_than"
     obs.loc[pst.obs_names[2],"drop_violations"] = True
     obs.loc[pst.obs_names[2],"obsval"] = -10000.0
@@ -2090,12 +2090,23 @@ def tenpar_drop_violations_test():
     
     pst.pestpp_options['ies_verbose_level'] = 4
     pst.pestpp_options["ies_bad_phi_sigma"] = -95
+    pst.pestpp_options["ies_autoadaloc"] = True
 
     
     pst.control_data.noptmax = 4
-    pst.pestpp_options["ies_drop_conflicts"] = False
+    pst.pestpp_options["ies_drop_conflicts"] = True
     pst_name = "pest_viol.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
+    try:
+        pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                     master_dir=test_d, worker_root=model_d, port=port)
+    except Exception as e:
+        pass
+    else:
+        raise Exception("should have failed")
+
+    obs.loc[pst.obs_names[2],"weight"] = 0.0
+    pst_name = "pest_viol.pst"
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
                                  master_dir=test_d, worker_root=model_d, port=port)
 
