@@ -2107,6 +2107,7 @@ def tenpar_drop_violations_test():
 
     obs.loc[pst.obs_names[2],"weight"] = 0.0
     pst_name = "pest_viol.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
                                  master_dir=test_d, worker_root=model_d, port=port)
 
