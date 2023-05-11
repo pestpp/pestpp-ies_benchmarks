@@ -1106,8 +1106,8 @@ def tenpar_upgrade_on_disk_test():
 
 
 def multimodal_test():
-    noptmax = 10
-    num_reals = 500
+    noptmax = 3
+    num_reals = 200
     # can be "circle" or "h"
     func = "circle"
     model_d = "mm1"
@@ -2085,6 +2085,7 @@ def tenpar_drop_violations_test():
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["ies_upgrades_in_memory"] = False
     pst.pestpp_options["ies_num_reals"] = 20
+    pst.pestpp_options["ies_num_threads"] = 4
     pst.pestpp_options["save_binary"] = False
     
     
@@ -2135,7 +2136,7 @@ if __name__ == "__main__":
     # tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
     #tenpar_adjust_weights_test()
-    tenpar_drop_violations_test()
+    #tenpar_drop_violations_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
     # tenpar_xsec_autoadaloc_test()
@@ -2162,10 +2163,10 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
-    #multimodal_test()
+    multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
-    #plot_mm1_results(None, func="circle", show_info=True)
+    plot_mm1_results(None, func="circle", show_info=True)
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(15)
