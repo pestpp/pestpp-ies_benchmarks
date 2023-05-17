@@ -4049,6 +4049,7 @@ hk_i39_j19            1.0 * log(hk_i39_j19) = 6.989700E-01 5.0000000000E-01     
 ++ies_localizer(localizer.mat)
 ++ies_localize_how(obs)
 ++ies_verbose_level(1)
+++ies_num_threads(3)
 ++ies_subset_how(random)
 ++ies_accept_phi_fac(1000.0)
 ++overdue_giveup_fac(1000.0)

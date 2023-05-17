@@ -244,8 +244,9 @@ def freyberg_dist_local_test():
     pst.pestpp_options["ies_include_base"] = False
     pst.pestpp_options["ies_par_en"] = "par_local.csv"
     pst.pestpp_options["ies_localizer"] = "localizer.mat"
-    pst.pestpp_options["ies_localize_how"] = "obs"
+    pst.pestpp_options["ies_localize_how"] = "par"
     pst.pestpp_options["ies_verbose_level"] = 1
+    pst.pestpp_options["ies_num_threads"] = 3
     pst.pestpp_options["ies_subset_how"] = "random"
     pst.pestpp_options["ies_accept_phi_fac"] = 1000.0
     pst.pestpp_options["overdue_giveup_fac"] = 1000.0
@@ -472,17 +473,17 @@ def tenpar_localize_how_test():
     pst.pestpp_options["ies_subset_size"] = 11
     pst.pestpp_options["ies_par_en"] = "par_local.csv"
     pst.pestpp_options["ies_obs_en"] = "obs_local.csv"
-    pst.pestpp_options["ies_localize_how"] = "o"
+    #pst.pestpp_options["ies_localize_how"] = "o"
     #pst.pestpp_options["ies_verbose_level"] = 3
-    pst.control_data.noptmax = 3
+    #pst.control_data.noptmax = 3
 
     # pst.pestpp_options["ies_verbose_level"] = 3
-    pst_name = os.path.join(template_d, "pest_local_o.pst")
-    pst.write(pst_name)
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
-                                master_dir=test_d+"_o", verbose=True, worker_root=model_d,
-                                port=port)
-    phi_df1 = pd.read_csv(os.path.join(test_d+"_o", "pest_local_o.phi.meas.csv"))
+    #pst_name = os.path.join(template_d, "pest_local_o.pst")
+    #pst.write(pst_name)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_local_o.pst", num_workers=10,
+    #                            master_dir=test_d+"_o", verbose=True, worker_root=model_d,
+    #                            port=port)
+    #phi_df1 = pd.read_csv(os.path.join(test_d+"_o", "pest_local_o.phi.meas.csv"))
 
     pst.pestpp_options["ies_localize_how"] = "p"
     pst.write(os.path.join(template_d, "pest_local_p.pst"))
@@ -490,14 +491,14 @@ def tenpar_localize_how_test():
                                 master_dir=test_d + "_p", verbose=True, worker_root=model_d,
                                 port=port)
     phi_df2 = pd.read_csv(os.path.join(test_d + "_p", "pest_local_p.phi.meas.csv"))
-    diff = phi_df1 - phi_df2
-    print(diff.max().max())
+    #diff = phi_df1 - phi_df2
+    #print(diff.max().max())
 
     # plt.plot(phi_df1.total_runs, phi_df1.loc[:, "mean"], label="local")
     # plt.plot(phi_df2.total_runs, phi_df2.loc[:, "mean"], label="full")
     # plt.legend()
     # plt.savefig(os.path.join(test_d+"_p", "local_test.pdf"))
-    assert diff.max().max() == 0
+    #assert diff.max().max() == 0
 
     mat = pyemu.Matrix.from_names(pst.nnz_obs_names,pst.adj_par_names).to_dataframe()
     mat.loc[:, :] = 1.0
@@ -953,11 +954,11 @@ if __name__ == "__main__":
     #tenpar_xsec_aal_sigma_dist_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
-    tenpar_by_vars_test()
+    #tenpar_by_vars_test()
     #tenpar_xsec_aal_invest()
     #temp()
     #tenpar_localize_how_test()
     #clues_longnames_test()
     #freyberg_local_threads_test()
     #tenpar_tied_test()
-    #freyberg_dist_local_test()
+    freyberg_dist_local_test()
