@@ -1106,7 +1106,7 @@ def tenpar_upgrade_on_disk_test():
 
 
 def multimodal_test():
-    noptmax = 3
+    noptmax = 2
     num_reals = 200
     # can be "circle" or "h"
     func = "circle"
@@ -1124,18 +1124,26 @@ def multimodal_test():
     with open(ins_file, 'w') as f:
         f.write("pif ~\n")
         f.write("l1 !obs1!\n")
+        f.write("l1 !par1!\n")
+        f.write("l1 !par2!\n")
+        
+        
     with open(os.path.join(test_d, "run.py"), 'w') as f:
         f.write("import numpy as np\n")
         f.write("lines =  open('par.dat','r').readlines()\n")
         if func == "circle":
-            f.write(
-                "result =  np.sqrt(float(lines[0].strip().split()[-1])**2 + float(lines[1].strip().split()[-1])**2)\n")
+            f.write("p1 = float(lines[0].strip().split()[-1])\n")
+            f.write("p2 = float(lines[1].strip().split()[-1])\n")
+            f.write("result =  np.sqrt(p1**2 + p2**2)\n")
         else:
             f.write("p1 = float(lines[0].strip().split()[-1])\n")
             f.write("p2 = float(lines[1].strip().split()[-1])\n")
             f.write("result = ((p1**2 + p2 - 11)**2 + (p1 + p2**2 -7)**2)\n")
         f.write("with open('obs.dat','w') as f:\n")
-        f.write("    f.write('{0:15.6E}'.format(result))\n")
+        f.write("    f.write('{0:15.6E}\\n'.format(result))\n")
+        f.write("    f.write('{0:15.6E}\\n'.format(p1))\n")
+        f.write("    f.write('{0:15.6E}\\n'.format(p2))\n")
+        
     pst = pyemu.Pst.from_io_files(tpl_file, tpl_file.replace(".tpl", ""), ins_file, ins_file.replace(".ins", ""),
                                   pst_path=".")
     pst.model_command = "python run.py"
@@ -1153,7 +1161,10 @@ def multimodal_test():
 
     pst.parameter_data.loc[:, "parchglim"] = "relative"
 
-    pst.observation_data.loc[:, "weight"] = 100.0
+    pst.observation_data.loc[:, "weight"] = 0
+    pst.observation_data.loc["obs1", "weight"] = 100.0
+    pst.observation_data.loc[:,"obgnme"] = pst.observation_data.obsnme.values
+ 
 
     pst.control_data.noptmax = 0
     pst.write(os.path.join(test_d, "mm1.pst"))
@@ -1162,7 +1173,7 @@ def multimodal_test():
     pst.pestpp_options["ies_num_reals"] = num_reals
     #pst.pestpp_options["ies_lambda_mults"] = 1.0
     #pst.pestpp_options["lambda_scale_fac"] = 1.0
-    pst.pestpp_options["ies_subset_size"] = 30
+    pst.pestpp_options["ies_subset_size"] = -10
     pst.pestpp_options["ies_multimodal_alpha"] = 0.1
     pst.pestpp_options["ies_verbose_level"] = 3
     pst.pestpp_options["ies_include_base"] = False
@@ -1170,11 +1181,10 @@ def multimodal_test():
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["ies_num_threads"] = 3
 
-    
-
 
     #pst.pestpp_options["ies_bad_phi_sigma"] = 1.25
     pst.pestpp_options["ies_use_mda"] = False
+
 
     #pst.pestpp_options["ies_no_noise"] = True
     pst.write(os.path.join(test_d, "mm1.pst"))
@@ -1203,11 +1213,46 @@ def multimodal_test():
     m_d = os.path.join(model_d, "master_mm_{0}_single".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
 
-
     pst.pestpp_options["ies_multimodal_alpha"] = 1.0
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_base_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
+
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.1
+    pst.pestpp_options["ies_num_threads"] = 4
+    pst.pestpp_options["ies_include_base"] = True
+    pst.pestpp_options["ies_center_on"] = "base"
+
+    pst.write(os.path.join(test_d, "mm1.pst"))
+    m_d = os.path.join(model_d, "master_mm_centeron_{0}".format(func))
+    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
+    pst.observation_data.loc["par1", "weight"] = 100.0
+    pst.observation_data.loc["par1","obsval"] = pst.parameter_data.loc["par1","parubnd"]
+    pst.observation_data.loc["obs1", "weight"] = 100.0
+
+    with open(os.path.join(test_d,"phi_facs.dat"),'w') as f:
+        f.write("obs1 0.5\n")
+        f.write("par1 0.5\n")
+    pst.pestpp_options["ies_phi_factor_file"] = "phi_facs.dat"
+    pst.write(os.path.join(test_d, "mm1.pst"))
+    m_d = os.path.join(model_d, "master_mm_centeron_phifac_{0}".format(func))
+    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
+
+    df = pd.DataFrame(index=np.arange(num_reals),columns=["par1","obs1"])
+    df.loc[:,:] = 100
+    df.iloc[:int(df.shape[0]/3),0] = 1e-10
+    df.iloc[-int(df.shape[0]/3):,1] = 1e-10
+    df.to_csv(os.path.join(test_d,"phi_fac.csv"))
+    pst.pestpp_options["ies_phi_factor_file"] = "phi_fac.csv"
+    pst.pestpp_options["ies_phi_factors_by_real"] = True
+
+    pst.write(os.path.join(test_d, "mm1.pst"))
+    m_d = os.path.join(model_d, "master_mm_phifac_byreal_{0}".format(func))
+    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+
 
 
 def plot_mm1_sweep_results():
@@ -1236,12 +1281,13 @@ def plot_mm1_sweep_results():
 
 
 
-def plot_mm1_results(noptmax=None, func="circle", show_info=False):
+def plot_mm1_results(noptmax=None, func="circle", show_info=False,mm_d = None):
     import matplotlib.pyplot as plt
     from matplotlib.patches import Circle
 
     base_d = os.path.join("mm1", "master_base_{0}".format(func))
-    mm_d = os.path.join("mm1", "master_mm_{0}_mt".format(func))
+    if mm_d is None:
+        mm_d = os.path.join("mm1", "master_mm_{0}_mt".format(func))
     pst = pyemu.Pst(os.path.join(base_d, "mm1.pst"))
     if noptmax is None:
         noptmax = pst.control_data.noptmax
@@ -1269,13 +1315,14 @@ def plot_mm1_results(noptmax=None, func="circle", show_info=False):
         pe_pr = pd.read_csv(os.path.join(mm_d, "mm1.0.par.csv"))
         pe_pt_mm.index = pe_pt_mm.index.map(lambda x: str(int(np.float(x))))
         pe_pr.index = pe_pr.index.map(lambda x: str(int(np.float(x))))
+        pe_pr.index = pe_pr.index.map(lambda x: str(x))
 
         if show_info and noptmax > 0:
             mm_info_fname = [f for f in os.listdir(mm_d) if "mm1.{0}.".format(noptmax) in f and f.endswith(".mm.info.csv")][0]
             print(mm_info_fname)
             mm_df = pd.read_csv(os.path.join(mm_d, mm_info_fname))
             mm_df.index = np.arange(mm_df.shape[0])
-            mm_df.loc[:, "pe_real_name"] = mm_df.pe_real_name.apply(lambda x: str(int(np.float(x))))
+            mm_df.loc[:, "pe_real_name"] = mm_df.pe_real_name.apply(lambda x: str(x))
             nei_cols = mm_df.columns[mm_df.columns.map(lambda x: "neighbor" in x)]
             mm_rnames = set(pe_pr.index.tolist())
             df = mm_df.iloc[1, :]
@@ -2163,10 +2210,15 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
-    multimodal_test()
+    #multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
     plot_mm1_results(None, func="circle", show_info=True)
+    plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_phifac_byreal_circle"))
+    plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_centeron_phifac_circle"))
+
+    
+    
     #mm_invest()
     #zdt1_weight_test()
     #plot_zdt1_results(15)
