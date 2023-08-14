@@ -714,6 +714,8 @@ def tenpar_par_restart_byvars_test():
 
 def tenpar_rns_test():
     """tenpar rns test"""
+    from datetime import datetime
+    import subprocess as sb
     model_d = "ies_10par_xsec"
     test_d = os.path.join(model_d, "master_rns")
     template_d = os.path.join(model_d, "template")
@@ -726,6 +728,34 @@ def tenpar_rns_test():
     pst.pestpp_options = {"ies_num_reals":num_reals}
     pst.control_data.noptmax = -1
     pst.write(os.path.join(test_d,"pest_restart.pst"))
+    # worker_d = test_d + "worker"
+    # if os.path.exists(worker_d):
+    #     shutil.rmtree(worker_d)
+    # shutil.copytree(test_d,worker_d)
+    # bd = os.getcwd()
+    # os.chdir(worker_d)
+    # p_worker = sb.Popen(args=[exe_path,"pest_restart.pst","/h","localhost:4004"])
+    # os.chdir(bd)
+    # os.chdir(test_d) 
+    # p_master = sb.Popen(args=[exe_path,"pest_restart.pst","/h",":4004"])
+    # s = datetime.now()
+    # while True:
+    #     secs = (datetime.now() - s).total_seconds()
+    #     #print(secs)
+    #     if secs >= 8:
+    #         p_master.kill()
+    #         p_worker.kill()
+    #         break
+    # os.chdir(bd)
+    # pdf,odf,mdf = pyemu.helpers.read_pestpp_runstorage(os.path.join(test_d,"pest_restart.rns"),irun="all",with_metadata=True)
+    # pdf.to_csv(os.path.join(test_d,"par_dump.csv"))
+    # odf.to_csv(os.path.join(test_d,"obs_dump.csv"))
+    # mdf.to_csv(os.path.join(test_d,"meta_dump.csv"))
+    # print(pdf)
+    # print(odf)
+    # print(mdf)
+    # exit()
+
     pyemu.os_utils.run("{0} {1}".format(exe_path, "pest_restart.pst"), cwd=test_d)
 
     obs_df1 = pd.read_csv(os.path.join(test_d,"pest_restart.0.obs.csv"),index_col=0)
@@ -940,8 +970,8 @@ if __name__ == "__main__":
     #freyberg_dist_local_invest()
     #tenpar_tied_test()
     #tenpar_by_vars_test()
-
-    tenpar_restart_test()
-    tenpar_par_restart_byvars_test()
-    tenpar_restart_wo_noise_w_base_test()
-    tenpar_restart_test_2()
+    tenpar_rns_test()
+    #tenpar_restart_test()
+    #tenpar_par_restart_byvars_test()
+    #tenpar_restart_wo_noise_w_base_test()
+    #tenpar_restart_test_2()

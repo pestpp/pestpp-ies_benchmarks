@@ -1826,8 +1826,11 @@ def tenpar_adjust_weights_test():
     obs.loc[pst.obs_names[8:12],"obgnme"] = "og3blahblah"
     obs.loc[pst.obs_names[8:12],"weight"] = 1
     obs.loc[pst.obs_names[12:],"obgnme"] = "og4yadayada"
-    obs.loc[pst.obs_names[12:],"weight"] = 0.00001
+    obs.loc[pst.obs_names[12:],"weight"] = 1.0
+
     obs.loc[:,"standard_deviation"] = 0.1
+    obs.loc[pst.obs_names[12:],"standard_deviation"] = 1e-11
+    obs.loc[pst.obs_names[12:],"obsval"] = 1e-9
     with open(os.path.join(template_d,"phi.csv"),'w') as f:
         f.write("og1,0.333333\n")
         f.write("og3,0.333333\n")
@@ -1855,6 +1858,10 @@ def tenpar_adjust_weights_test():
     pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
                                  master_dir=test_d, worker_root=model_d, port=port)
 
+    noise_file = os.path.join(test_d,"pest_adj.obs+noise.jcb")
+    noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=noise_file)
+    print(noise)
+    exit()
     wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
@@ -2180,7 +2187,7 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #freyberg_center_on_test()
     #freyberg_rcov_test()
-    # tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
     #tenpar_adjust_weights_test()
     #tenpar_drop_violations_test()
@@ -2213,9 +2220,9 @@ if __name__ == "__main__":
     #multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
-    plot_mm1_results(None, func="circle", show_info=True)
-    plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_phifac_byreal_circle"))
-    plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_centeron_phifac_circle"))
+    #plot_mm1_results(None, func="circle", show_info=True)
+    #plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_phifac_byreal_circle"))
+    #plot_mm1_results(None, func="circle", show_info=True,mm_d = os.path.join("mm1","master_mm_centeron_phifac_circle"))
 
     
     
