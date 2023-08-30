@@ -1736,7 +1736,7 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight.obs+noise.jcb"))
     noise = noise.loc[oe1.index,:]
     noise.to_binary(os.path.join(template_d,"noise1.jcb"))
-    pst.control_data.noptmax = 1
+    pst.control_data.noptmax = 3
     pst_name = "pest_weight_restart.pst"
     pst.write(os.path.join(template_d,pst_name))
     test_d = os.path.join(model_d, "master_upgrade_weight_2")
