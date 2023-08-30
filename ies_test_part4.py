@@ -1861,7 +1861,7 @@ def tenpar_adjust_weights_test():
     noise_file = os.path.join(test_d,"pest_adj.obs+noise.jcb")
     noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=noise_file)
     print(noise)
-    exit()
+    
     wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
