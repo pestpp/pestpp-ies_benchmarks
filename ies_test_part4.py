@@ -2181,15 +2181,45 @@ def tenpar_drop_violations_test():
         assert np.any(oe.loc[:,pst.obs_names[-3]]<=obs.loc[pst.obs_names[-3],"obsval"])
 
 
+def tenpar_mean_iter_test():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_mean_iter")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    pst.pestpp_options["ies_n_iter_mean"] = 9
+    pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 10
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=5,
+    #                                 master_dir=test_d, worker_root=model_d, port=port)
+    test_d1 = test_d + "_base"
+    if os.path.exists(test_d1):
+        shutil.rmtree(test_d1)
+    shutil.copytree(template_d,test_d1)
+    pst.pestpp_options.pop("ies_n_iter_mean")
+    pst.write(os.path.join(test_d1,pst_name),version=2)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d1)
+
+
 
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     #tenpar_drop_violations_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
