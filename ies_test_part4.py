@@ -2197,7 +2197,7 @@ def tenpar_mean_iter_test():
     pst.pestpp_options["ies_initial_lambda"] = -100
     pst.control_data.noptmax = 10
     pst.pestpp_options["ies_num_reals"] = 10
-    pst.write(os.path.join(test_d,pst_name),version=2)
+    pst.write(os.path.join(test_d,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
     #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=5,
     #                                 master_dir=test_d, worker_root=model_d, port=port)
@@ -2206,7 +2206,7 @@ def tenpar_mean_iter_test():
         shutil.rmtree(test_d1)
     shutil.copytree(template_d,test_d1)
     pst.pestpp_options.pop("ies_n_iter_mean")
-    pst.write(os.path.join(test_d1,pst_name),version=2)
+    pst.write(os.path.join(test_d1,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d1)
 
 
