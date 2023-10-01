@@ -1107,7 +1107,7 @@ def tenpar_upgrade_on_disk_test():
 
 def multimodal_test():
     noptmax = 2
-    num_reals = 200
+    num_reals = 100
     # can be "circle" or "h"
     func = "circle"
     model_d = "mm1"
@@ -1180,6 +1180,9 @@ def multimodal_test():
     pst.pestpp_options["ies_use_approx"] = True
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["ies_num_threads"] = 3
+    pst.pestpp_options["ies_debug_bad_phi"] = True
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_subset"] = True
 
 
     #pst.pestpp_options["ies_bad_phi_sigma"] = 1.25
@@ -1206,19 +1209,28 @@ def multimodal_test():
     
 
     m_d = os.path.join(model_d, "master_mm_{0}_mt".format(func))
+    # if os.path.exists(m_d):
+    #     shutil.rmtree(m_d)
+    # shutil.copytree(test_d,m_d)
+    # pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    
 
     pst.pestpp_options["ies_num_threads"] = 1
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_{0}_single".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
+    assert phidf.iteration.max() == pst.control_data.noptmax
+    assert phidf.loc[phidf.index[-1],"min"] < 0.1
 
     pst.pestpp_options["ies_multimodal_alpha"] = 1.0
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_base_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
-
-
+    phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
+    assert phidf.iteration.max() == pst.control_data.noptmax
+    
     pst.pestpp_options["ies_multimodal_alpha"] = 0.1
     pst.pestpp_options["ies_num_threads"] = 4
     pst.pestpp_options["ies_include_base"] = True
@@ -1227,6 +1239,9 @@ def multimodal_test():
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_centeron_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
+    assert phidf.iteration.max() == pst.control_data.noptmax
+    assert phidf.loc[phidf.index[-1],"min"] < 0.1
 
     pst.observation_data.loc["par1", "weight"] = 100.0
     pst.observation_data.loc["par1","obsval"] = pst.parameter_data.loc["par1","parubnd"]
@@ -1239,8 +1254,9 @@ def multimodal_test():
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_centeron_phifac_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
-
-
+    phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
+    assert phidf.iteration.max() == pst.control_data.noptmax
+    
     df = pd.DataFrame(index=np.arange(num_reals),columns=["par1","obs1"])
     df.loc[:,:] = 100
     df.iloc[:int(df.shape[0]/3),0] = 1e-10
@@ -1252,7 +1268,9 @@ def multimodal_test():
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_phifac_byreal_{0}".format(func))
     pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
-
+    phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
+    assert phidf.iteration.max() == pst.control_data.noptmax
+    assert phidf.loc[phidf.index[-1],"min"] < 0.1
 
 
 def plot_mm1_sweep_results():
@@ -2214,7 +2232,7 @@ def tenpar_mean_iter_test():
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    tenpar_mean_iter_test()
+    #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
@@ -2247,7 +2265,7 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
-    # multimodal_test()
+    multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
     #plot_mm1_results(None, func="circle", show_info=True)
