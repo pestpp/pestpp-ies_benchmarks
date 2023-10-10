@@ -1,4 +1,0 @@
-parnme,partrans,parchglim,parval1,parlbnd,parubnd,pargp,scale,offset,extra,dercom
-hk1,none,factor,8.25,1.5,15.0,hk,1.0,0.0,,1.0
-rch0,none,factor,1.25,0.5,2.0,rch0,1.0,0.0,,1.0
-rch1,fixed,factor,1.0,0.5,2.0,rch1,1.0,0.0,,1.0
