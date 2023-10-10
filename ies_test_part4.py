@@ -2227,11 +2227,111 @@ def tenpar_mean_iter_test():
     pst.write(os.path.join(test_d1,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d1)
 
+def twopar_freyberg_resp_surface_invest():
+    model_d = "twopar_freyberg"
+    resp_d = os.path.join(model_d, "master_resp_surface")
+    template_d = os.path.join(model_d, "template")
+    #if os.path.exists(resp_d):
+     #   shutil.rmtree(resp_d)
+    #shutil.copytree(template_d,resp_d)
+    #pyemu.os_utils.run("{0} freyberg.pst".format(exe_path.replace("-ies","-swp")),cwd=resp_d)
+    if not os.path.exists(resp_d):
+    
+        pyemu.os_utils.start_workers(template_d,exe_path.replace("-ies","-swp"),"freyberg.pst",master_dir=resp_d,num_workers=20,worker_root=model_d)
+    pst_path = os.path.join(template_d,"freyberg.pst")
+    pst = pyemu.Pst(pst_path)
+    pst.control_data.noptmax = 6
+    pst.pestpp_options = {}
+    pst.write(pst_path,version=2)
+    m_d_base = os.path.join(model_d,"master_base")
+    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_base,num_workers=20,worker_root=model_d)
+    pst.pestpp_options = {"ies_n_iter_mean":pst.control_data.noptmax}
+    pst.write(pst_path,version=2)
+    m_d_allmean = os.path.join(model_d,"master_allmean")
+    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_allmean,num_workers=20,worker_root=model_d)
+    pst.pestpp_options = {"ies_n_iter_mean":int(pst.control_data.noptmax/2)}
+    pst.write(pst_path,version=2)
+    m_d_somemean = os.path.join(model_d,"master_somemean")
+    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_somemean,num_workers=20,worker_root=model_d)
+    
+def plot_twopar_resp_results():
+    model_d = "twopar_freyberg"
+    resp_d = os.path.join(model_d, "master_resp_surface")
+    template_d = os.path.join(model_d, "template")
+    pst_path = os.path.join(template_d,"freyberg.pst")
+    pst = pyemu.Pst(pst_path)
+    m_ds = [os.path.join(model_d,d) for d in os.listdir(model_d) if os.path.isdir(os.path.join(model_d,d)) and d.startswith("master") and "resp" not in d]
+    fig,axes = plt.subplots(1,len(m_ds),figsize=(6*len(m_ds),5))
+    for m_d,ax in zip(m_ds,axes):
+        ax,resp_surf = plot_response_surface(WORKING_DIR=resp_d,ax=ax)
+        ax.set_title(m_d.replace("master_",""),loc="left")
+        phidf = pd.read_csv(os.path.join(m_d,"freyberg.phi.actual.csv"))
+        iiter = phidf.iteration.max()
+        pes = []
+        for i in range(iiter+1):
+            fname = os.path.join(m_d,"freyberg.{0}.par.csv".format(i))
+            if not os.path.exists(fname):
+                break
+            pe = pd.read_csv(fname,index_col=0)    
+            pes.append(pe)
+        for real in pes[-1].index:
+            xvals  = [pe.loc[real,"hk1"] for pe in pes]
+            yvals  = [pe.loc[real,"rch0"] for pe in pes]
+            ax.plot(xvals,yvals,marker=".",c="0.5",lw=0.5)
+        xvals = pes[-1].loc[:,"hk1"].values
+        yvals = pes[-1].loc[:,"rch0"].values
+        ax.scatter(xvals,yvals,marker=".",c="b",zorder=10)
+    plt.show()
+    print(m_ds)
 
-
+def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKING_DIR='freyberg_mf6',
+                          nanthresh=None,alpha=0.5, label=True, maxresp=None,
+                          figsize=(5,5),levels=None, cmap="nipy_spectral",ax=None):
+    NUM_STEPS_RESPSURF = 40
+    p1,p2 = parnames
+    df_in = pd.read_csv(os.path.join(WORKING_DIR, "sweep_in.csv"))
+    df_out = pd.read_csv(os.path.join(WORKING_DIR, "sweep_out.csv"))
+    resp_surf = np.zeros((NUM_STEPS_RESPSURF, NUM_STEPS_RESPSURF))
+    p1_values = df_in[p1].unique()
+    p2_values = df_in[p2].unique()
+    c = 0
+    for i, v1 in enumerate(p1_values):
+        for j, v2 in enumerate(p2_values):
+            resp_surf[j, i] = df_out.loc[c, "phi"]
+            c += 1
+    if ax is None:
+        fig = plt.figure(figsize=figsize)
+        ax = plt.subplot(111)
+    X, Y = np.meshgrid(p1_values, p2_values)
+    if nanthresh is not None:
+        resp_surf = np.ma.masked_where(resp_surf > nanthresh, resp_surf)
+    if maxresp is None:
+        maxresp = np.max(resp_surf)
+    if levels is None:
+        levels = np.array([0.001, 0.01, 0.02, 0.05, .1, .2, .5])*maxresp
+    
+    import matplotlib.colors as colors
+    vmin=np.min(resp_surf)
+    vmax=maxresp
+    p = ax.pcolor(X, Y, resp_surf, alpha=alpha, cmap=cmap,# vmin=vmin, vmax=vmax,
+                norm=colors.LogNorm(vmin=vmin, vmax=vmax))
+    plt.colorbar(p)
+    c = ax.contour(X, Y, resp_surf,
+                   levels=levels,
+                   colors='k', alpha=0.5)
+    plt.title('min $\\Phi$ = {0:.2f}'.format(np.nanmin(resp_surf)))
+    if label:
+        plt.clabel(c)
+    ax.set_xlim(p1_values.min(), p1_values.max())
+    ax.set_ylim(p2_values.min(), p2_values.max())
+    ax.set_xlabel(p1)
+    ax.set_ylabel(p2)
+    return ax, resp_surf
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
+    twopar_freyberg_resp_surface_invest()
+    plot_twopar_resp_results()
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
@@ -2265,7 +2365,7 @@ if __name__ == "__main__":
     # tenpar_align_test_2()
     # tenpar_covloc_test()
     #tenpar_upgrade_on_disk_test()
-    multimodal_test()
+    #multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
     #plot_mm1_results(None, func="circle", show_info=True)
