@@ -2241,16 +2241,16 @@ def twopar_freyberg_resp_surface_invest():
     pst_path = os.path.join(template_d,"freyberg.pst")
     pst = pyemu.Pst(pst_path)
     pst.control_data.noptmax = 6
-    pst.pestpp_options = {}
-    pst.write(pst_path,version=2)
+    pst.pestpp_options = {"par_sigma_range":20}
+    pst.write(pst_path)
     m_d_base = os.path.join(model_d,"master_base")
     pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_base,num_workers=20,worker_root=model_d)
-    pst.pestpp_options = {"ies_n_iter_mean":pst.control_data.noptmax}
-    pst.write(pst_path,version=2)
+    pst.pestpp_options = {"ies_n_iter_mean":pst.control_data.noptmax,"par_sigma_range":20}
+    pst.write(pst_path)
     m_d_allmean = os.path.join(model_d,"master_allmean")
     pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_allmean,num_workers=20,worker_root=model_d)
-    pst.pestpp_options = {"ies_n_iter_mean":int(pst.control_data.noptmax/2)}
-    pst.write(pst_path,version=2)
+    pst.pestpp_options = {"ies_n_iter_mean":int(pst.control_data.noptmax/2),"par_sigma_range":20}
+    pst.write(pst_path)
     m_d_somemean = os.path.join(model_d,"master_somemean")
     pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_somemean,num_workers=20,worker_root=model_d)
     
@@ -2260,11 +2260,14 @@ def plot_twopar_resp_results():
     template_d = os.path.join(model_d, "template")
     pst_path = os.path.join(template_d,"freyberg.pst")
     pst = pyemu.Pst(pst_path)
-    m_ds = [os.path.join(model_d,d) for d in os.listdir(model_d) if os.path.isdir(os.path.join(model_d,d)) and d.startswith("master") and "resp" not in d]
-    fig,axes = plt.subplots(1,len(m_ds),figsize=(6*len(m_ds),5))
-    for m_d,ax in zip(m_ds,axes):
+    #m_ds = [os.path.join(model_d,d) for d in os.listdir(model_d) if os.path.isdir(os.path.join(model_d,d)) and d.startswith("master") and "resp" not in d]
+    m_ds = ["master_base","master_allmean","master_somemean"]
+    labels = ["A) all standard iters","B) all mean iters","C) 3 mean iters, 3 standard iters"]
+    m_ds = [os.path.join(model_d,m_d) for m_d in m_ds]
+    fig,axes = plt.subplots(1,len(m_ds),figsize=(3*len(m_ds),2.5))
+    for im_d,(m_d,ax,label) in enumerate(zip(m_ds,axes,labels)):
         ax,resp_surf = plot_response_surface(WORKING_DIR=resp_d,ax=ax)
-        ax.set_title(m_d.replace("master_",""),loc="left")
+        ax.set_title(label,loc="left")#os.path.split(m_d)[1].replace("master_",""),loc="left")
         phidf = pd.read_csv(os.path.join(m_d,"freyberg.phi.actual.csv"))
         iiter = phidf.iteration.max()
         pes = []
@@ -2274,14 +2277,27 @@ def plot_twopar_resp_results():
                 break
             pe = pd.read_csv(fname,index_col=0)    
             pes.append(pe)
-        for real in pes[-1].index:
+        for ireal,real in enumerate(pes[-1].index):
             xvals  = [pe.loc[real,"hk1"] for pe in pes]
             yvals  = [pe.loc[real,"rch0"] for pe in pes]
-            ax.plot(xvals,yvals,marker=".",c="0.5",lw=0.5)
+            if ireal == 0:
+                ax.plot(xvals,yvals,marker=".",c="k",lw=0.4,alpha=0.2,label="realization trajectory")
+            else:
+                ax.plot(xvals,yvals,marker=".",c="k",lw=0.4,alpha=0.2)
+
+        xvals  = [pe.loc[:,"hk1"].values.mean() for pe in pes]
+        yvals  = [pe.loc[:,"rch0"].values.mean() for pe in pes]
+        ax.plot(xvals,yvals,marker="^",c="k",lw=1.5,dashes=(1,1),zorder=10,label="mean trajectory")
+        ax.set_xlabel("hydraulic conductivity")
+        ax.set_ylabel("recharge")
         xvals = pes[-1].loc[:,"hk1"].values
         yvals = pes[-1].loc[:,"rch0"].values
-        ax.scatter(xvals,yvals,marker=".",c="b",zorder=10)
-    plt.show()
+        ax.scatter(xvals,yvals,marker=".",c="b",alpha=0.5,zorder=10,label="posterior")
+        if im_d == 0:
+            ax.legend(loc="upper left")
+        
+    plt.tight_layout()
+    plt.savefig("mean_iter_compare.pdf")
     print(m_ds)
 
 def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKING_DIR='freyberg_mf6',
@@ -2319,9 +2335,9 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
     c = ax.contour(X, Y, resp_surf,
                    levels=levels,
                    colors='k', alpha=0.5)
-    plt.title('min $\\Phi$ = {0:.2f}'.format(np.nanmin(resp_surf)))
-    if label:
-        plt.clabel(c)
+    #plt.title('min $\\Phi$ = {0:.2f}'.format(np.nanmin(resp_surf)))
+    #if label:
+    plt.clabel(c)
     ax.set_xlim(p1_values.min(), p1_values.max())
     ax.set_ylim(p2_values.min(), p2_values.max())
     ax.set_xlabel(p1)
@@ -2330,7 +2346,7 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    twopar_freyberg_resp_surface_invest()
+    #twopar_freyberg_resp_surface_invest()
     plot_twopar_resp_results()
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
