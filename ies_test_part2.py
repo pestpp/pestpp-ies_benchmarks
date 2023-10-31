@@ -721,13 +721,14 @@ def tenpar_rns_test():
     template_d = os.path.join(model_d, "template")
     pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
 
-    num_reals = 5
-    if os.path.exists(test_d):
-       shutil.rmtree(test_d)
-    shutil.copytree(template_d, test_d)
-    pst.pestpp_options = {"ies_num_reals":num_reals}
-    pst.control_data.noptmax = -1
-    pst.write(os.path.join(test_d,"pest_restart.pst"))
+    # num_reals = 5
+    # if os.path.exists(test_d):
+    #    shutil.rmtree(test_d)
+    # shutil.copytree(template_d, test_d)
+    # pst.pestpp_options = {"ies_num_reals":num_reals}
+    # pst.pestpp_options["ies_upgrades_in_memory"] = False
+    # pst.control_data.noptmax = 1
+    # pst.write(os.path.join(test_d,"pest_restart.pst"))
     # worker_d = test_d + "worker"
     # if os.path.exists(worker_d):
     #     shutil.rmtree(worker_d)
@@ -742,12 +743,16 @@ def tenpar_rns_test():
     # while True:
     #     secs = (datetime.now() - s).total_seconds()
     #     #print(secs)
-    #     if secs >= 8:
+    #     # about 8 secs for the initial ensemble eval
+    #     # 25 sec for lambda testing
+    #     if secs >= 25:
     #         p_master.kill()
     #         p_worker.kill()
     #         break
     # os.chdir(bd)
     # pdf,odf,mdf = pyemu.helpers.read_pestpp_runstorage(os.path.join(test_d,"pest_restart.rns"),irun="all",with_metadata=True)
+    # print(mdf.info_txt.values)
+    # exit()
     # pdf.to_csv(os.path.join(test_d,"par_dump.csv"))
     # odf.to_csv(os.path.join(test_d,"obs_dump.csv"))
     # mdf.to_csv(os.path.join(test_d,"meta_dump.csv"))
