@@ -720,15 +720,18 @@ def tenpar_rns_test():
     test_d = os.path.join(model_d, "master_rns")
     template_d = os.path.join(model_d, "template")
     pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+    
+    num_reals = 5
+    pst.pestpp_options = {"ies_save_lambda_en":True,"ies_num_reals":num_reals}
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
 
-    # num_reals = 5
-    # if os.path.exists(test_d):
-    #    shutil.rmtree(test_d)
-    # shutil.copytree(template_d, test_d)
+
     # pst.pestpp_options = {"ies_num_reals":num_reals}
     # pst.pestpp_options["ies_upgrades_in_memory"] = False
     # pst.control_data.noptmax = 1
-    # pst.write(os.path.join(test_d,"pest_restart.pst"))
+    pst.write(os.path.join(test_d,"pest_restart.pst"))
     # worker_d = test_d + "worker"
     # if os.path.exists(worker_d):
     #     shutil.rmtree(worker_d)
@@ -765,7 +768,7 @@ def tenpar_rns_test():
 
     obs_df1 = pd.read_csv(os.path.join(test_d,"pest_restart.0.obs.csv"),index_col=0)
     assert obs_df1.shape[0] == num_reals,obs_df1.shape
-    pst.pestpp_options = {}
+    #pst.pestpp_options = {}
     num_reals = 10
     pst.pestpp_options["ies_num_reals"] = num_reals
     pst.write(os.path.join(test_d,"pest_restart.pst"))
