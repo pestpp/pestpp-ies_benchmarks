@@ -2223,9 +2223,17 @@ def tenpar_mean_iter_test():
     if os.path.exists(test_d1):
         shutil.rmtree(test_d1)
     shutil.copytree(template_d,test_d1)
+    
+    phidf = pd.read_csv(os.path.join(test_d,"pest.phi.actual.csv"),index_col=0)
+    print(phidf.loc[:,"mean"])
+    assert phidf.shape[0] == pst.control_data.noptmax + 2 #plus for prior and plus one since the mean shift process increments things
+    assert phidf.loc[pst.pestpp_options["ies_n_iter_mean"]+1,"mean"] > phidf.loc[pst.pestpp_options["ies_n_iter_mean"],"mean"]
     pst.pestpp_options.pop("ies_n_iter_mean")
     pst.write(os.path.join(test_d1,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d1)
+    phidf = pd.read_csv(os.path.join(test_d1,"pest.phi.actual.csv"),index_col=0)
+    print(phidf.shape)
+    assert phidf.shape[0] < pst.control_data.noptmax - 1
 
 def twopar_freyberg_resp_surface_invest():
     model_d = "twopar_freyberg"
@@ -2377,9 +2385,9 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    twopar_freyberg_resp_surface_invest()
-    plot_twopar_resp_results()
-    #tenpar_mean_iter_test()
+    #twopar_freyberg_resp_surface_invest()
+    #plot_twopar_resp_results()
+    tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
