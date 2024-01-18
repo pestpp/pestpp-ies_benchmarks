@@ -446,4 +446,4 @@ freyberg6.rch.tpl freyberg6.rch
 sfr.csv.ins sfr.csv
 heads.csv.ins heads.csv
 ++ies_n_iter_mean(3)
-++par_sigma_range(20)
+++par_sigma_range(2)

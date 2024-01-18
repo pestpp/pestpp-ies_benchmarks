@@ -2213,7 +2213,7 @@ def tenpar_mean_iter_test():
     pst = pyemu.Pst(os.path.join(template_d,pst_name))
     pst.pestpp_options["ies_n_iter_mean"] = 9
     pst.pestpp_options["ies_initial_lambda"] = -100
-    pst.control_data.noptmax = 10
+    pst.control_data.noptmax = 12
     pst.pestpp_options["ies_num_reals"] = 10
     pst.write(os.path.join(test_d,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
@@ -2231,28 +2231,55 @@ def twopar_freyberg_resp_surface_invest():
     model_d = "twopar_freyberg"
     resp_d = os.path.join(model_d, "master_resp_surface")
     template_d = os.path.join(model_d, "template")
-    #if os.path.exists(resp_d):
-     #   shutil.rmtree(resp_d)
-    #shutil.copytree(template_d,resp_d)
-    #pyemu.os_utils.run("{0} freyberg.pst".format(exe_path.replace("-ies","-swp")),cwd=resp_d)
-    if not os.path.exists(resp_d):
-    
-        pyemu.os_utils.start_workers(template_d,exe_path.replace("-ies","-swp"),"freyberg.pst",master_dir=resp_d,num_workers=20,worker_root=model_d)
     pst_path = os.path.join(template_d,"freyberg.pst")
     pst = pyemu.Pst(pst_path)
+    # if os.path.exists(resp_d):
+    #    shutil.rmtree(resp_d)
+    # shutil.copytree(template_d,resp_d)
+    # hk1_vals,rch0_vals = [],[]
+    # par = pst.parameter_data
+    # for hinc in np.linspace(par.loc["hk1","parlbnd"],par.loc["hk1","parubnd"],40):
+    #     for rinc in np.linspace(par.loc["rch0","parlbnd"],par.loc["rch0","parubnd"],40):
+    #         hk1_vals.append(hinc)
+    #         rch0_vals.append(rinc)
+    # df = pd.DataFrame({"hk1":hk1_vals,"rch0":rch0_vals})
+    # for pname in pst.par_names:
+    #     if pname in ["hk1","rch0"]:
+    #         continue
+    #     df[pname] = par.loc[pname,"parval1"]
+    # df.to_csv(os.path.join(resp_d,"sweep_in.csv"))
+    # pyemu.os_utils.run("{0} freyberg.pst".format(exe_path.replace("-ies","-swp")),cwd=resp_d)
+    
+    #if not os.path.exists(resp_d):
+    #    pyemu.os_utils.start_workers(template_d,exe_path.replace("-ies","-swp"),"freyberg.pst",master_dir=resp_d,num_workers=20,worker_root=model_d)
+    
     pst.control_data.noptmax = 6
-    pst.pestpp_options = {"par_sigma_range":20}
+    pst.pestpp_options = {"par_sigma_range":2}
     pst.write(pst_path)
     m_d_base = os.path.join(model_d,"master_base")
-    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_base,num_workers=20,worker_root=model_d)
-    pst.pestpp_options = {"ies_n_iter_mean":pst.control_data.noptmax,"par_sigma_range":20}
+    if os.path.exists(m_d_base):
+        shutil.rmtree(m_d_base)
+    shutil.copytree(template_d,m_d_base)
+    pyemu.os_utils.run("{0} freyberg.pst".format(exe_path),cwd=m_d_base)
+    #yemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_base,num_workers=20,worker_root=model_d)
+    pst.pestpp_options = {"ies_n_iter_mean":pst.control_data.noptmax-1,"par_sigma_range":2}
     pst.write(pst_path)
     m_d_allmean = os.path.join(model_d,"master_allmean")
-    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_allmean,num_workers=20,worker_root=model_d)
-    pst.pestpp_options = {"ies_n_iter_mean":int(pst.control_data.noptmax/2),"par_sigma_range":20}
+    if os.path.exists(m_d_allmean):
+        shutil.rmtree(m_d_allmean)
+    shutil.copytree(template_d,m_d_allmean)
+    pyemu.os_utils.run("{0} freyberg.pst".format(exe_path),cwd=m_d_allmean)
+    
+    #pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_allmean,num_workers=20,worker_root=model_d)
+    pst.pestpp_options = {"ies_n_iter_mean":int(pst.control_data.noptmax/2),"par_sigma_range":2}
     pst.write(pst_path)
     m_d_somemean = os.path.join(model_d,"master_somemean")
-    pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_somemean,num_workers=20,worker_root=model_d)
+    if os.path.exists(m_d_somemean):
+        shutil.rmtree(m_d_somemean)
+    shutil.copytree(template_d,m_d_somemean)
+    pyemu.os_utils.run("{0} freyberg.pst".format(exe_path),cwd=m_d_somemean)
+    
+    #pyemu.os_utils.start_workers(template_d,exe_path,"freyberg.pst",master_dir=m_d_somemean,num_workers=20,worker_root=model_d)
     
 def plot_twopar_resp_results():
     model_d = "twopar_freyberg"
@@ -2264,11 +2291,15 @@ def plot_twopar_resp_results():
     m_ds = ["master_base","master_allmean","master_somemean"]
     labels = ["A) all standard iters","B) all mean iters","C) 3 mean iters, 3 standard iters"]
     m_ds = [os.path.join(model_d,m_d) for m_d in m_ds]
-    fig,axes = plt.subplots(1,len(m_ds),figsize=(3*len(m_ds),2.5))
-    for im_d,(m_d,ax,label) in enumerate(zip(m_ds,axes,labels)):
+    fig,axes = plt.subplots(2,len(m_ds),figsize=(3*len(m_ds),5.5))
+    for im_d,(m_d,ax,label,pax) in enumerate(zip(m_ds,axes[0,:],labels,axes[1,:])):
         ax,resp_surf = plot_response_surface(WORKING_DIR=resp_d,ax=ax)
         ax.set_title(label,loc="left")#os.path.split(m_d)[1].replace("master_",""),loc="left")
         phidf = pd.read_csv(os.path.join(m_d,"freyberg.phi.actual.csv"))
+        print(phidf)
+        iters = phidf.iteration.values
+        [pax.plot(iters,vals,lw=0.01,color="0.5") for vals in np.log10(phidf.iloc[:,6:].values.T)]
+        pax.set_title(m_d)
         iiter = phidf.iteration.max()
         pes = []
         for i in range(iiter+1):
@@ -2346,7 +2377,7 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
 
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
-    #twopar_freyberg_resp_surface_invest()
+    twopar_freyberg_resp_surface_invest()
     plot_twopar_resp_results()
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
