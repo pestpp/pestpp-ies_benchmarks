@@ -2297,17 +2297,22 @@ def plot_twopar_resp_results():
     pst = pyemu.Pst(pst_path)
     #m_ds = [os.path.join(model_d,d) for d in os.listdir(model_d) if os.path.isdir(os.path.join(model_d,d)) and d.startswith("master") and "resp" not in d]
     m_ds = ["master_base","master_allmean","master_somemean"]
-    labels = ["A) all standard iters","B) all mean iters","C) 3 mean iters, 3 standard iters"]
+    labels = ["A) standard iters","B) mean shift iter 6","C) mean shift iter 4"]
+    plabels = ["D) phi sequence","E) phi sequence","F) phi sequence"]
+    
     m_ds = [os.path.join(model_d,m_d) for m_d in m_ds]
     fig,axes = plt.subplots(2,len(m_ds),figsize=(3*len(m_ds),5.5))
-    for im_d,(m_d,ax,label,pax) in enumerate(zip(m_ds,axes[0,:],labels,axes[1,:])):
+    for im_d,(m_d,ax,label,pax,plabel) in enumerate(zip(m_ds,axes[0,:],labels,axes[1,:],plabels)):
         ax,resp_surf = plot_response_surface(WORKING_DIR=resp_d,ax=ax)
         ax.set_title(label,loc="left")#os.path.split(m_d)[1].replace("master_",""),loc="left")
         phidf = pd.read_csv(os.path.join(m_d,"freyberg.phi.actual.csv"))
         print(phidf)
         iters = phidf.iteration.values
         [pax.plot(iters,vals,lw=0.01,color="0.5") for vals in np.log10(phidf.iloc[:,6:].values.T)]
-        pax.set_title(m_d)
+        pax.set_title(plabel,loc="left")
+        pax.set_xlabel("iteration")
+        pax.set_ylabel("$log_{10} \\phi$")
+        pax.set_xlim(0,pst.control_data.noptmax+1)
         iiter = phidf.iteration.max()
         pes = []
         for i in range(iiter+1):
@@ -2370,7 +2375,7 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
     vmax=maxresp
     p = ax.pcolor(X, Y, resp_surf, alpha=alpha, cmap=cmap,# vmin=vmin, vmax=vmax,
                 norm=colors.LogNorm(vmin=vmin, vmax=vmax))
-    plt.colorbar(p)
+    plt.colorbar(p,label="$log_{10} \\phi$")
     c = ax.contour(X, Y, resp_surf,
                    levels=levels,
                    colors='k', alpha=0.5)
@@ -2386,8 +2391,8 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #twopar_freyberg_resp_surface_invest()
-    #plot_twopar_resp_results()
-    tenpar_mean_iter_test()
+    plot_twopar_resp_results()
+    #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
