@@ -2308,7 +2308,7 @@ def plot_twopar_resp_results():
         phidf = pd.read_csv(os.path.join(m_d,"freyberg.phi.actual.csv"))
         print(phidf)
         iters = phidf.iteration.values
-        [pax.plot(iters,vals,lw=0.01,color="0.5") for vals in np.log10(phidf.iloc[:,6:].values.T)]
+        [pax.plot(iters,vals,lw=0.1,color="0.5",alpha=0.5) for vals in np.log10(phidf.iloc[:,6:].values.T)]
         pax.set_title(plabel,loc="left")
         pax.set_xlabel("iteration")
         pax.set_ylabel("$log_{10} \\phi$")
