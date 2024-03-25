@@ -798,6 +798,139 @@ def tenpar_fixed_test2():
     #     raise Exception()
 
 
+def tenpar_fixed_test3():
+    """tenpar fixed test 2"""
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_fixed2")
+    template_d = os.path.join(model_d, "template")
+    pst = pyemu.Pst(os.path.join(template_d,"pest.pst"))
+    pst.control_data.noptmax = 2
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst.parameter_data.loc[:,"partrans"] = "log"
+    
+    cov = pyemu.Cov.from_parameter_data(pst)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=cov,num_reals=10) 
+    pst.parameter_data.loc["k_01","partrans"] = "fixed"
+    pe = pe.loc[:,pst.adj_par_names] 
+    pe.to_csv(os.path.join(test_d,"par_fixed.csv"))
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options.pop("ies_par_en",None)
+    pst.pestpp_options["ies_par_en"] = "par_fixed.csv"
+
+    pst.parameter_data.loc["k_01","partrans"] = "fixed"
+    pst.parameter_data.loc["k_01","scale"] = 10.0
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_save_binary"] = False
+    pst.pestpp_options["ies_include_base"] = False
+
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    ins_name = os.path.join(test_d,"hk_Layer_1.ref.ins")
+    with open(ins_name,'w') as f:
+        f.write("pif ~\nl1 ")
+        for i in range(9):
+            f.write(" !k_{0:02d}! w ".format(i+1))
+        f.write(" !k_10! \n")
+    df = pst.add_observations(ins_name,ins_name.replace(".ins",""),pst_path=".")
+    pst.observation_data.loc[df.obsnme,"weight"] = 0.0
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    
+    pst.control_data.noptmax = 4
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    # pyemu.os_utils.start_workers(template_d, exe_path, "pest_fixed.pst", num_workers=5, master_dir=test_d,
+    #                             worker_root=model_d, port=port)
+    prev = None
+    for itr in range(pst.control_data.noptmax):
+        pe = pd.read_csv(os.path.join(test_d,"pest_fixed.{0}.par.csv".format(itr)),index_col=0)
+        oe = pd.read_csv(os.path.join(test_d,"pest_fixed.{0}.obs.csv".format(itr)),index_col=0)
+        
+        pd.columns = pe.columns.map(str.lower)
+        #df = df.iloc[:-1, :]
+        #df.index = pe.index
+        print(itr,pe.loc[:,"k_01"].values,oe.loc[:,"k_01"].values)
+        d = pe.loc[:,"k_01"].values - oe.loc[:,"k_01"].values
+        assert np.abs(d.max()) < 1e-6
+        if prev is not None:
+            d = prev - oe.loc[:,"k_01"].values
+        assert np.abs(d.max()) < 1e-6
+
+        prev = oe.loc[:,"k_01"].values
+
+    test_d = os.path.join(model_d, "master_fixed2")
+    template_d = os.path.join(model_d, "template")
+    pst = pyemu.Pst(os.path.join(template_d,"pest.pst"))
+    pst.control_data.noptmax = 2
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst.parameter_data.loc[:,"partrans"] = "log"
+    
+    cov = pyemu.Cov.from_parameter_data(pst)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=cov,num_reals=10) 
+    #pst.parameter_data.loc["k_01","partrans"] = "fixed"
+    pe = pe.loc[:,pst.adj_par_names] 
+    pe.to_csv(os.path.join(test_d,"par_fixed.csv"))
+    pst.pestpp_options["ies_num_reals"] = 10
+    pst.pestpp_options.pop("ies_par_en",None)
+    pst.pestpp_options["ies_par_en"] = "par_fixed.csv"
+
+    pst.parameter_data.loc["k_01","partrans"] = "fixed"
+    pst.parameter_data.loc["k_01","scale"] = 10.0
+    pst.pestpp_options["ies_lambda_mults"] = 1.0
+    pst.pestpp_options["lambda_scale_fac"] = 1.0
+    pst.pestpp_options["ies_save_binary"] = False
+    pst.pestpp_options["ies_include_base"] = False
+
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    ins_name = os.path.join(test_d,"hk_Layer_1.ref.ins")
+    with open(ins_name,'w') as f:
+        f.write("pif ~\nl1 ")
+        for i in range(9):
+            f.write(" !k_{0:02d}! w ".format(i+1))
+        f.write(" !k_10! \n")
+    df = pst.add_observations(ins_name,ins_name.replace(".ins",""),pst_path=".")
+    pst.observation_data.loc[df.obsnme,"weight"] = 0.0
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    
+    pst.control_data.noptmax = 4
+    pst.write(os.path.join(test_d, "pest_fixed.pst"))
+    pyemu.helpers.run("{0} pest_fixed.pst".format(exe_path), cwd=test_d)
+    # pyemu.os_utils.start_workers(template_d, exe_path, "pest_fixed.pst", num_workers=5, master_dir=test_d,
+    #                             worker_root=model_d, port=port)
+    prev = None
+    for itr in range(pst.control_data.noptmax):
+        pe = pd.read_csv(os.path.join(test_d,"pest_fixed.{0}.par.csv".format(itr)),index_col=0)
+        oe = pd.read_csv(os.path.join(test_d,"pest_fixed.{0}.obs.csv".format(itr)),index_col=0)
+        
+        pd.columns = pe.columns.map(str.lower)
+        #df = df.iloc[:-1, :]
+        #df.index = pe.index
+        print(itr,pe.loc[:,"k_01"].values,oe.loc[:,"k_01"].values)
+        d = pe.loc[:,"k_01"].values - oe.loc[:,"k_01"].values
+        assert np.abs(d.max()) < 1e-6
+        if prev is not None:
+            d = prev - oe.loc[:,"k_01"].values
+        assert np.abs(d.max()) < 1e-6
+
+        prev = oe.loc[:,"k_01"].values
+    
+
+    # pst.control_data.noptmax = -2
+    # par = pst.parameter_data
+    # par.loc["stage","parval1"] = 2
+    # pst.write(os.path.join(template_d,"pest_fixed.pst"))
+    # pyemu.os_utils.run("{0} pest_fixed.pst".format(exe_path),cwd=template_d)
+
+
 def tenpar_fixed_test():
     """tenpar fixed test"""
     model_d = "ies_10par_xsec"
@@ -2246,8 +2379,8 @@ if __name__ == "__main__":
     #tenpar_localizer_pdc_obsgroup_test()
     #tenpar_localizer_pdc_pargroup_forgive_test()
     #tenpar_localizer_incomplete_test()
-    tenpar_localizer_incomplete_group_test()
-    
+    #tenpar_localizer_incomplete_group_test()
+    tenpar_fixed_test3()
     
     # full list of tests
     #tenpar_subset_test()
