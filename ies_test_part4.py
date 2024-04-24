@@ -1939,6 +1939,26 @@ def tenpar_adjust_weights_test():
     assert np.abs(ogdf.adjusted_phi.sum() - phidf.loc[0,"mean"]) < 1e-3
     assert phidf.loc[0,"mean"] > phidf.loc[2,"mean"]
 
+    with open(os.path.join(template_d,"phi.csv"),'w') as f:
+        f.write("og1,-999\n")
+        f.write("og3,-999\n")
+        f.write("og4,-999\n")
+
+    pst.control_data.noptmax = 2
+    pst.pestpp_options["ies_drop_conflicts"] = False
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+                                 master_dir=test_d, worker_root=model_d, port=port)
+
+    pst.set_res(os.path.join(test_d,"pest_adj.0.base.rei"))
+    print(pst.phi)
+    phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.meas.csv"),index_col=0)
+    print(phidf.loc[phidf.index[0],"base"])
+    d = np.abs(pst.phi - phidf.loc[phidf.index[0],"base"])
+    print(d)
+    assert d < 0.01
+
     
 
 def tenpar_adjust_weights_test_by_real():
@@ -2391,13 +2411,13 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
 if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #twopar_freyberg_resp_surface_invest()
-    plot_twopar_resp_results()
+    #plot_twopar_resp_results()
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
-    #tenpar_adjust_weights_test()
+    tenpar_adjust_weights_test()
     #tenpar_drop_violations_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
