@@ -1065,12 +1065,31 @@ def tenpar_upgrade_on_disk_test():
     pst.pestpp_options["ies_no_noise"] = True
     pst.pestpp_options["ies_lambda_mults"] = [0.1, 1.0]
     pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
+    pst.pestpp_options["ies_accept_phi_fac"] = 1000
+
+    par = pst.parameter_data
+    par.loc[:,"partrans"] = "log"
+
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=10)
+    
+    fixed = pst.par_names[0:2]
+    par.loc[fixed,"partrans"] = "fixed"
+    adj= pst.adj_par_names
+    #pe = pe.loc[:,adj]
+    print(pe)
+    pe.to_binary(os.path.join(template_d,"prior.jcb"))
+    
+    pst.pestpp_options["ies_par_en"] = "prior.jcb"
     pst.control_data.noptmax = 2
     pst_name = "pest_upgrade.pst"
     pst.write(os.path.join(template_d, pst_name))
     # pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
     phi1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
@@ -1080,9 +1099,14 @@ def tenpar_upgrade_on_disk_test():
     pst.pestpp_options["ies_upgrades_in_memory"] = False
     pst.write(os.path.join(template_d, pst_name))
     test_d = os.path.join(model_d, "master_upgrade_2")
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
 
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+    
     phi2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
@@ -2417,7 +2441,7 @@ if __name__ == "__main__":
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     #tenpar_drop_violations_test()
     # tenpar_adjust_weights_test_by_real()
     # tenpar_base_par_file_test()
@@ -2444,7 +2468,7 @@ if __name__ == "__main__":
     #tenpar_align_test()
     # tenpar_align_test_2()
     # tenpar_covloc_test()
-    #tenpar_upgrade_on_disk_test()
+    tenpar_upgrade_on_disk_test()
     #multimodal_test()
     #mm_invest()
     #plot_mm1_sweep_results()
