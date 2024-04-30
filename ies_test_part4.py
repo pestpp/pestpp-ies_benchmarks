@@ -548,9 +548,13 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_debug_high_subset_phi"] = True
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)
     phi1 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     pst.pestpp_options = {}
     pst.pestpp_options["ies_num_reals"] = 10
@@ -560,9 +564,13 @@ def tenpar_high_phi_test():
     # pst.pestpp_options["ies_debug_high_subset_phi"] =True
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)  
     phi2 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     diff = phi1 - phi2
     assert diff.max().max() == 0.0
@@ -575,9 +583,13 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_debug_high_upgrade_phi"] = True
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)
     phi3 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     diff = phi3 - phi2
     assert diff.max().max() == 0.0
@@ -593,9 +605,13 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_debug_bad_phi"] = True
     pst.control_data.noptmax = 3
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)
     phi4 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     assert os.path.exists(os.path.join(test_d, "pest_high_phi.3.obs.csv"))
 
@@ -611,9 +627,13 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_center_on"] = "base"
     pst.control_data.noptmax = 3
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)
     phi5 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     assert os.path.exists(os.path.join(test_d, "pest_high_phi.3.obs.csv"))
     
@@ -632,10 +652,15 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_center_on"] = "base"
     pst.control_data.noptmax = 3
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
+    #                             master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)
     phi5 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
+    
     assert os.path.exists(os.path.join(test_d, "pest_high_phi.3.obs.csv"))
     for i in range(2):
         rpe_file = os.path.join(test_d,"pest_high_phi.rejected.{0}.par.csv".format(i+1))
@@ -865,7 +890,7 @@ def freyberg_rcov_test():
     pst.pestpp_options["ies_drop_conflicts"] = True
     pst.pestpp_options["ies_autoadaloc"] = True
     pst.pestpp_options["ies_save_rescov"] = True
-    pst.pestpp_options["ies_verbose_level"] = 4
+    pst.pestpp_options["ies_verbose_level"] = 1
     pst.control_data.nphinored = 20
     pst.control_data.noptmax = 2
     pst.write(os.path.join(template_d, "pest_rescov.pst"))
@@ -903,7 +928,7 @@ def tenpar_align_test():
 
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
-    # shutil.copytree(template_d,test_d)
+    shutil.copytree(template_d,test_d)
     np.random.seed(1234)
     oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst, num_reals=9)
     oe.loc["base", pst.nnz_obs_names] = pst.observation_data.loc[pst.nnz_obs_names, "obsval"]
@@ -917,9 +942,12 @@ def tenpar_align_test():
     pst.control_data.noptmax = 1
     pst_name = "pest_align.pst"
     pst.write(os.path.join(template_d, pst_name))
-    # pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, master_dir=test_d,
-                                 worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, master_dir=test_d,
+    #                             worker_root=model_d, port=port)
     pe_file = os.path.join(test_d, pst_name.replace(".pst", ".1.par.csv"))
     oe_file = os.path.join(test_d, pst_name.replace(".pst", ".1.obs.csv"))
     assert os.path.exists(pe_file), pe_file
@@ -942,8 +970,12 @@ def tenpar_align_test():
     pst.pestpp_options["ies_par_en"] = "align_par.csv"
     pst.write(os.path.join(template_d, pst_name))
     # pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, master_dir=test_d,
-                                 worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8, master_dir=test_d,
+    #                             worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
     pe_file = os.path.join(test_d, pst_name.replace(".pst", ".1.par.csv"))
     oe_file = os.path.join(test_d, pst_name.replace(".pst", ".1.obs.csv"))
     assert os.path.exists(pe_file), pe_file
@@ -991,61 +1023,6 @@ def tenpar_align_test_2():
             raise Exception("misaligned indices in row {0}: {1} vs {2}".format(i, p, o))
 
 
-# def tenpar_covloc_test():
-#     model_d = "ies_10par_xsec"
-
-#     template_d = os.path.join(model_d, "test_template")
-
-#     if not os.path.exists(template_d):
-#         raise Exception("template_d {0} not found".format(template_d))
-#     pst_name = os.path.join(template_d, "pest.pst")
-#     pst = pyemu.Pst(pst_name)
-#     pst.parameter_data.loc[:, "partrans"] = "none"
-#     pst.observation_data.loc[:, "weight"] = 1.0
-#     pst.control_data.noptmax = 2
-#     pst.pestpp_options = {}
-#     pst.pestpp_options["ies_num_reals"] = 5
-#     pst.pestpp_options["ies_verbose_level"] = 4
-#     pst.pestpp_options["ies_lambda_mults"] = 1.0
-#     pst.pestpp_options["lambda_scale_fac"] = 1.0
-#     pst.pestpp_options["ies_use_approx"] = False
-#     pst.pestpp_options["ies_use_prior_scaling"] = True
-#     pst.write(os.path.join(template_d, "pest_covloc_base.pst"))
-#     test_d = os.path.join(model_d, "master_covloc_base")
-#     pyemu.os_utils.start_workers(template_d, exe_path, "pest_covloc_base.pst", num_workers=8, master_dir=test_d,
-#                                  worker_root=model_d, port=port)
-
-#     phi1 = pd.read_csv(os.path.join(test_d, "pest_covloc_base.phi.actual.csv"), index_col=0)
-#     shutil.copy2(os.path.join(test_d, "pest_covloc_base.0.par.csv"), os.path.join(template_d, "restart_par.csv"))
-#     shutil.copy2(os.path.join(test_d, "pest_covloc_base.0.obs.csv"), os.path.join(template_d, "restart_obs.csv"))
-#     shutil.copy2(os.path.join(test_d, "pest_covloc_base.obs+noise.csv"), os.path.join(template_d, "obs+noise.csv"))
-
-#     pst.pestpp_options["ies_par_en"] = "restart_par.csv"
-#     # pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
-#     pst.pestpp_options["ies_obs_en"] = "obs+noise.csv"
-#     pst.pestpp_options["ies_autoadaloc"] = True
-#     pst.pestpp_options["ies_autoadaloc_sigma_dist"] = 0.0
-#     pst.pestpp_options["ies_loc_type"] = "cov"
-#     pst.pestpp_options["forgive_unknown_args"] = True
-
-#     pst.write(os.path.join(template_d, "pest_covloc.pst"))
-#     test_d = os.path.join(model_d, "master_covloc")
-#     pyemu.os_utils.start_workers(template_d, exe_path, "pest_covloc.pst", num_workers=8, master_dir=test_d,
-#                                  worker_root=model_d, port=port)
-#     phi2 = pd.read_csv(os.path.join(test_d, "pest_covloc.phi.actual.csv"), index_col=0)
-#     d = (phi1.iloc[:, 2:] - phi2.iloc[:, 2:]).apply(lambda x: np.abs(x))
-#     print(d)
-#     print(d.max())
-#     assert d.max().max() < 1.0e-3, d.max().max()
-
-#     # pst.pestpp_options["ies_loc_type"] = "local"
-#     # pst.pestpp_options["forgive_unknown_args"] = True
-#     # pst.pestpp_options["ies_localize_how"] = "observations"
-
-#     # pst.write(os.path.join(template_d, "pest_localloc.pst"))
-#     # test_d = os.path.join(model_d, "master_localloc")
-#     # pyemu.os_utils.start_workers(template_d, exe_path, "pest_localloc.pst", num_workers=8, master_dir=test_d,
-#     #                              worker_root=model_d, port=port)
 
 
 def tenpar_upgrade_on_disk_test():
@@ -1075,7 +1052,7 @@ def tenpar_upgrade_on_disk_test():
     fixed = pst.par_names[0:2]
     par.loc[fixed,"partrans"] = "fixed"
     adj= pst.adj_par_names
-    #pe = pe.loc[:,adj]
+    pe = pe.loc[:,adj]
     print(pe)
     pe.to_binary(os.path.join(template_d,"prior.jcb"))
     
@@ -1233,17 +1210,22 @@ def multimodal_test():
     
 
     m_d = os.path.join(model_d, "master_mm_{0}_mt".format(func))
-    # if os.path.exists(m_d):
-    #     shutil.rmtree(m_d)
-    # shutil.copytree(test_d,m_d)
-    # pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
     
 
     pst.pestpp_options["ies_num_threads"] = 1
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_{0}_single".format(func))
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
     phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
     assert phidf.iteration.max() == pst.control_data.noptmax
     assert phidf.loc[phidf.index[-1],"min"] < 0.1
@@ -1251,7 +1233,12 @@ def multimodal_test():
     pst.pestpp_options["ies_multimodal_alpha"] = 1.0
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_base_{0}".format(func))
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    
     phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
     assert phidf.iteration.max() == pst.control_data.noptmax
     
@@ -1262,7 +1249,12 @@ def multimodal_test():
 
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_centeron_{0}".format(func))
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    
     phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
     assert phidf.iteration.max() == pst.control_data.noptmax
     assert phidf.loc[phidf.index[-1],"min"] < 0.1
@@ -1277,7 +1269,12 @@ def multimodal_test():
     pst.pestpp_options["ies_phi_factor_file"] = "phi_facs.dat"
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_centeron_phifac_{0}".format(func))
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    
     phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
     assert phidf.iteration.max() == pst.control_data.noptmax
     
@@ -1291,7 +1288,12 @@ def multimodal_test():
 
     pst.write(os.path.join(test_d, "mm1.pst"))
     m_d = os.path.join(model_d, "master_mm_phifac_byreal_{0}".format(func))
-    pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    #pyemu.os_utils.start_workers(test_d, exe_path, "mm1.pst", worker_root=model_d, num_workers=35, master_dir=m_d)
+    if os.path.exists(m_d):
+        shutil.rmtree(m_d)
+    shutil.copytree(test_d,m_d)
+    pyemu.os_utils.run("{0} mm1.pst".format(exe_path),cwd=m_d)
+    
     phidf = pd.read_csv(os.path.join(m_d,"mm1.phi.actual.csv"))
     assert phidf.iteration.max() == pst.control_data.noptmax
     assert phidf.loc[phidf.index[-1],"min"] < 0.1
@@ -1585,7 +1587,7 @@ def tenpar_upgrade_on_disk_test_with_fixed():
 
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
-    #shutil.copytree(template_d, test_d)
+    shutil.copytree(template_d, test_d)
 
     pst.parameter_data.loc[:,"partrans"] = "log"
     cov = pyemu.Cov.from_parameter_data(pst)
@@ -1606,9 +1608,13 @@ def tenpar_upgrade_on_disk_test_with_fixed():
     pst.control_data.noptmax = 2
     pst_name = "pest_upgrade.pst"
     pst.write(os.path.join(template_d, pst_name))
-    # pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+    
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
     phi1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
@@ -1619,8 +1625,12 @@ def tenpar_upgrade_on_disk_test_with_fixed():
     pst_name = "pest_upgrade_2.pst"
     pst.write(os.path.join(template_d, pst_name))
     test_d = os.path.join(model_d, "master_upgrade_2_fixed")
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
 
     phi2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
@@ -1683,8 +1693,12 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
     pst_name = "pest_upgrade.pst"
     pst.write(os.path.join(template_d, pst_name))
     # pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
     phi1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
                                                             format(pst.control_data.noptmax))), index_col=0)
@@ -1694,8 +1708,12 @@ def tenpar_upgrade_on_disk_test_with_fixed2():
     pst.pestpp_options["ies_upgrades_in_memory"] = False
     pst.write(os.path.join(template_d, pst_name))
     test_d = os.path.join(model_d, "master_upgrade_2_fixed")
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     phi2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
     pe2 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".{0}.par.csv". \
@@ -1744,8 +1762,13 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     pst.control_data.noptmax = -1
     pst_name = "pest_weight.pst"
     pst.write(os.path.join(template_d, pst_name))
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+
     phi1 = pd.read_csv(os.path.join(test_d, pst_name.replace(".pst", ".phi.actual.csv")))
 
     oe1 = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d, pst_name.replace(".pst", ".0.obs.jcb")))
@@ -1782,8 +1805,12 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     pst_name = "pest_weight_restart.pst"
     pst.write(os.path.join(template_d,pst_name))
     test_d = os.path.join(model_d, "master_upgrade_weight_2")
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     oe = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=os.path.join(test_d,"pest_weight_restart.0.obs.jcb"))
     print(oe.shape)
@@ -1798,9 +1825,12 @@ def tenpar_upgrade_on_disk_test_weight_ensemble_test():
     pst.pestpp_options.pop("ies_restart_obs_en")
     pst.write(os.path.join(template_d, pst_name))
     test_d = os.path.join(model_d, "master_upgrade_weight_3")
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                master_dir=test_d, worker_root=model_d, port=port)
-
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                            master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
     
 
 
@@ -1841,9 +1871,12 @@ def tenpar_extra_binary_vars_test():
     pst.control_data.noptmax = 1
     pst_name = "pest_extra.pst"
     pst.write(os.path.join(template_d,pst_name))
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
-
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
 
 def tenpar_adjust_weights_test():
@@ -1897,8 +1930,12 @@ def tenpar_adjust_weights_test():
     pst.pestpp_options["ies_drop_conflicts"] = False
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     noise_file = os.path.join(test_d,"pest_adj.obs+noise.jcb")
     noise = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=noise_file)
@@ -1929,9 +1966,13 @@ def tenpar_adjust_weights_test():
     pst.control_data.noptmax = 2
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
-    
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+
     wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
@@ -1972,8 +2013,12 @@ def tenpar_adjust_weights_test():
     pst.pestpp_options["ies_drop_conflicts"] = False
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     pst.set_res(os.path.join(test_d,"pest_adj.0.base.rei"))
     print(pst.phi)
@@ -2051,8 +2096,12 @@ def tenpar_adjust_weights_test_by_real():
     pst.control_data.noptmax = 2
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
@@ -2104,8 +2153,12 @@ def tenpar_adjust_weights_test_by_real():
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
     
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
@@ -2225,9 +2278,12 @@ def tenpar_drop_violations_test():
     obs.loc[pst.obs_names[2],"weight"] = 0.0
     pst_name = "pest_viol.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-                                 master_dir=test_d, worker_root=model_d, port=port)
-
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
     for i in range(1,pst.control_data.noptmax+1):
         oe = pd.read_csv(os.path.join(test_d,"pest_viol.{0}.obs.csv".format(i)),index_col=0)
