@@ -650,6 +650,7 @@ def tenpar_high_phi_test():
     #pst.pestpp_options["ies_debug_bad_phi"] = True
     pst.pestpp_options["ies_debug_high_upgrade_phi"] = True
     pst.pestpp_options["ies_center_on"] = "base"
+    pst.pestpp_options["ies_no_noise"] = False
     pst.control_data.noptmax = 3
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
     #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
@@ -2495,7 +2496,7 @@ if __name__ == "__main__":
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
-    tenpar_upgrade_on_disk_test_weight_ensemble_test()
+    #tenpar_upgrade_on_disk_test_weight_ensemble_test()
     # tenpar_base_run_test()
     #tenpar_adjust_weights_test()
     #tenpar_drop_violations_test()
@@ -2511,7 +2512,7 @@ if __name__ == "__main__":
     # clues_longnames_test()
     # freyberg_local_threads_test()
     # freyberg_aal_test()
-    # tenpar_high_phi_test()
+    tenpar_high_phi_test()
     # freyberg_svd_draws_invest()
     #tenpar_xsec_aal_sigma_dist_test()
     # freyberg_combined_aal_test()
