@@ -2372,6 +2372,120 @@ def tenpar_localizer_incomplete_group_test():
         assert np.abs(d).max() < 1.0e-5
 
 
+
+def tenpar_ineq_test():
+    """tenpar ineq test"""
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_ineq_test")
+    template_d = os.path.join(model_d, "test_template")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+
+    pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+    obs = pst.observation_data
+    nznames = pst.nnz_obs_names
+    obs.loc[nznames,"obgnme"] = "greater_than"
+    obs.loc[nznames,"lower_bound"] = obs.loc[nznames,"obsval"]
+
+    pst.control_data.noptmax = 2
+
+    num_reals = 10
+    pst.pestpp_options = {}
+    pst.pestpp_options["ies_num_reals"] = num_reals
+    #pst.pestpp_options["ies_no_noise"] = True
+    
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+ 
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf1 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+
+
+
+    test_d = os.path.join(model_d, "master_ineq_test_gtbnd")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pst.pestpp_options["ies_obs_bounds_as_ineq"] = True
+    obs.loc[nznames,"obgnme"] = "obsgrp"
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf2 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+
+    diff = phidf1 - phidf2
+    print(diff)
+    print(np.abs(diff.values).max())
+    assert np.abs(diff.values).max() < 1e-7
+
+    obs.loc[nznames,"obgnme"] = "less_than"
+    obs.loc[nznames,"lower_bound"] = np.nan
+    obs.loc[nznames,"upper_bound"] = obs.loc[nznames,"obsval"]
+    pst.pestpp_options["ies_obs_bounds_as_ineq"] = False
+    test_d = os.path.join(model_d, "master_ineq_test")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    #obs.loc[nznames,"obgnme"] = "obsgrp"
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf1 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+
+    test_d = os.path.join(model_d, "master_ineq_test_ltbnd")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    obs.loc[nznames,"obgnme"] = "obsgrp"
+    pst.pestpp_options["ies_obs_bounds_as_ineq"] = True
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf2 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+    diff = phidf1 - phidf2
+    print(diff)
+    print(np.abs(diff.values).max())
+    assert np.abs(diff.values).max() < 1e-7
+
+    obs.loc[:,"lower_bound"] = obs.loc[:,"obsval"]
+    obs.loc[:,"upper_bound"] = obs.loc[:,"obsval"]
+    obs.loc[:,"weight"] = 1.0
+    pst.pestpp_options["ies_no_noise"] = True
+    pst.pestpp_options["ies_obs_bounds_as_ineq"] = False
+    test_d = os.path.join(model_d, "master_ineq_test")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    #obs.loc[nznames,"obgnme"] = "obsgrp"
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf1 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+
+    test_d = os.path.join(model_d, "master_ineq_test_doublebnd")
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    obs.loc[:,"obgnme"] = "obsgrp"
+    pst.pestpp_options["ies_obs_bounds_as_ineq"] = True
+    pst.write(os.path.join(test_d,"pest.pst"),version=2)
+    pyemu.helpers.run(exe_path + " pest.pst", cwd=test_d)
+    phidf2 = pd.read_csv(os.path.join(test_d,"pest.phi.meas.csv"))
+    diff = phidf1 - phidf2
+    print(diff)
+    print(np.abs(diff.values).max())
+    assert np.abs(diff.values).max() < 1e-7
+
+
+
 if __name__ == "__main__":
     
     #tenpar_restart_similar_test2()
@@ -2380,14 +2494,14 @@ if __name__ == "__main__":
     #tenpar_localizer_pdc_pargroup_forgive_test()
     #tenpar_localizer_incomplete_test()
     #tenpar_localizer_incomplete_group_test()
-    tenpar_fixed_test3()
+    #tenpar_fixed_test3()
     
     # full list of tests
     #tenpar_subset_test()
     #shutil.copy2(os.path.join("..", "exe", "windows", "x64", "Debug", "pestpp-ies.exe"),
     #             os.path.join("..", "bin", "win","pestpp-ies.exe"))
     #invest()
-    #tenpar_narrow_range_test()
+    tenpar_ineq_test()
     #tenpar_restart_similar_test()
     #tenpar_fixed_test()
     # tenpar_full_cov_test()
