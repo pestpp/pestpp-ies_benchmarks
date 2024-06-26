@@ -1918,7 +1918,7 @@ def tenpar_adjust_weights_test():
     pst.pestpp_options["lambda_scale_fac"] = [0.7, 1.0]
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["ies_upgrades_in_memory"] = False
-    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_remainder"] = False
     pst.pestpp_options["ies_num_reals"] = 10
     pst.pestpp_options["save_binary"] = True
     
@@ -2489,7 +2489,124 @@ def plot_response_surface(parnames=['hk1','rch0'], pstfile='freyberg.pst', WORKI
     ax.set_ylabel(p2)
     return ax, resp_surf
 
+
+
+def tenpar_noise_invest():
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_noise_invest")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    pst_name = os.path.join(template_d, "pest.pst")
+    pst = pyemu.Pst(pst_name)
+
+    # if os.path.exists(test_d):
+    #     shutil.rmtree(test_d)
+    pst.parameter_data.loc[:,"partrans"] = "log"
+
+    obs = pst.observation_data
+    # obs.loc[pst.obs_names[:4],"obgnme"] = "og1a"
+    # obs.loc[pst.obs_names[:4],"weight"] = 10 + 3.*(np.random.random(4))
+    # obs.loc[pst.obs_names[4:8],"obgnme"] = "og1b"
+    # obs.loc[pst.obs_names[4:8],"weight"] = 5
+    # obs.loc[pst.obs_names[8:12],"obgnme"] = "og3"
+    # obs.loc[pst.obs_names[8:12],"weight"] = 1
+    # obs.loc[pst.obs_names[12:],"obgnme"] = "og4"
+    # obs.loc[pst.obs_names[12:],"weight"] = 0.00001
+    # obs.loc[:,"standard_deviation"] = 0.1
+    # #with open(os.path.join(template_d,"phi.csv"),'w') as f:
+    # #    f.write("og1,0.333333\n")
+    # #    f.write("og3,0.333333\n")
+    # #    f.write("og4,0.333333\n")
+    # gdict = {}
+    # for g in pst.nnz_obs_groups:
+    #     gdict[g] = obs.loc[obs.obgnme==g,"obsnme"].to_list()
+
+    # df = pd.DataFrame(columns=["og1","og3","og4"],index=np.arange(12))
+    # df.loc[:,:] = 0.33333
+    # df.loc[np.arange(3),["og1"]] = 0.9
+    # df.loc[np.arange(3),["og3"]] = 0.05
+    # df.loc[np.arange(3),["og4"]] = 0.05
+
+    # df.loc[np.arange(3,6),["og1"]] = 0.05
+    # df.loc[np.arange(3,6),["og3"]] = 0.9
+    # df.loc[np.arange(3,6),["og4"]] = 0.05
+
+    # df.loc[np.arange(6,11),["og1"]] = 0.05
+    # df.loc[np.arange(6,11),["og3"]] = 0.05
+    # df.loc[np.arange(6,11),["og4"]] = 0.09
+
+    # df.to_csv(os.path.join(template_d,"phi.csv"))
+
+    print(pst.nnz_obs_names)
+    noise_mults = np.linspace(0.75,1.25,100)
+    noise_arr = np.zeros((len(noise_mults),pst.nnz_obs))
+    for j,val in enumerate(obs.loc[pst.nnz_obs_names,"obsval"]):
+        noise_arr[:,j] = val * noise_mults
+
+    print(noise_arr)
+    df = pd.DataFrame(noise_arr,columns=pst.nnz_obs_names)
+    df.to_csv(os.path.join(template_d,"noise.csv"))
+
+
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["ies_obs_en"] = "noise.csv"
+
+    pst.pestpp_options["ies_num_reals"] = df.shape[0]
+    pst.pestpp_options['ies_verbose_level'] = 4
+    pst.pestpp_options["ies_bad_phi_sigma"] = -95
+    #pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    
+    
+    
+    pst.control_data.noptmax = 20
+    pst_name = "pest_adj.pst"
+    pst.write(os.path.join(template_d,pst_name),version=2)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
+    #                             master_dir=test_d, worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d, test_d)
+    pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+
+
+    noise = pd.read_csv(os.path.join(test_d,"pest_adj.obs+noise.csv"),index_col=0)
+    meas = pd.read_csv(os.path.join(test_d,"pest_adj.phi.meas.csv"))
+    actual = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"))
+
+    obs_dfs = []
+    for itr in meas.iteration:
+        obs_dfs.append(pd.read_csv(os.path.join(test_d,"pest_adj.{0}.obs.csv".format(itr)),index_col=0))
+
+    last_df = obs_dfs[-1]
+    for i,df in enumerate(obs_dfs):
+        obs_dfs[i] = df.loc[last_df.index,:]
+
+    fig,ax = plt.subplots(1,1,figsize=(10,10))
+
+    o1,o2 = pst.nnz_obs_names
+    cmap = plt.get_cmap("jet")
+    for ireal,real in enumerate(last_df.index):
+        c = cmap(float(ireal)/float(last_df.shape[0]))
+        
+        ax.scatter(noise.loc[real,o1],noise.loc[real,o2],marker='^',s=30,c=c,zorder=10)
+        v1 = [odf.loc[real,o1] for odf in obs_dfs]
+        v2 = [odf.loc[real,o2] for odf in obs_dfs]
+        ax.plot(v1,v2,marker="x",color=c,lw=0.1,alpha=0.25)
+        ax.scatter(last_df.loc[real,o1],last_df.loc[real,o2],marker='o',s=30,c=c,zorder=10)
+        ax.annotate("{0:3.3f}".format(meas.loc[:,real].values[-1]),
+            (last_df.loc[real,o1],last_df.loc[real,o2]),xytext=(0,-4),textcoords="offset pixels",va="top",ha="center")
+
+        ax.annotate("{0:3.3f}".format(actual.loc[:,real].values[-1]),
+            (last_df.loc[real,o1],last_df.loc[real,o2]),xytext=(0,4),textcoords="offset pixels",va="bottom",ha="center")
+
+    plt.show()
+
+    
+
 if __name__ == "__main__":
+    tenpar_noise_invest()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #twopar_freyberg_resp_surface_invest()
     #plot_twopar_resp_results()
@@ -2512,7 +2629,8 @@ if __name__ == "__main__":
     # clues_longnames_test()
     # freyberg_local_threads_test()
     # freyberg_aal_test()
-    tenpar_high_phi_test()
+    #tenpar_high_phi_test()
+    #tenpar_adjust_weights_test()
     # freyberg_svd_draws_invest()
     #tenpar_xsec_aal_sigma_dist_test()
     # freyberg_combined_aal_test()
