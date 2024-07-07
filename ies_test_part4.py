@@ -2540,10 +2540,11 @@ def tenpar_noise_invest():
     # df.to_csv(os.path.join(template_d,"phi.csv"))
 
     print(pst.nnz_obs_names)
-    noise_mults = np.linspace(0.75,1.25,100)
-    noise_arr = np.zeros((len(noise_mults),pst.nnz_obs))
+    noise_adds = np.linspace(-1.0,1.0,100)
+    noise_arr = np.zeros((len(noise_adds),pst.nnz_obs))
     for j,val in enumerate(obs.loc[pst.nnz_obs_names,"obsval"]):
-        noise_arr[:,j] = val * noise_mults
+        noise_arr[:,j] = val + noise_adds
+
 
     print(noise_arr)
     df = pd.DataFrame(noise_arr,columns=pst.nnz_obs_names)
@@ -2555,16 +2556,16 @@ def tenpar_noise_invest():
 
     pst.pestpp_options["ies_num_reals"] = df.shape[0]
     pst.pestpp_options['ies_verbose_level'] = 4
-    pst.pestpp_options["ies_bad_phi_sigma"] = -95
-    #pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    pst.pestpp_options["ies_bad_phi_sigma"] = -90
+    #pst.pestpp_options["ies_multimodal_alpha"] = 0.25
+    #pst.pestpp_options["ies_n_iter_mean"] = 3
     
     
     
-    pst.control_data.noptmax = 20
+    pst.control_data.noptmax = 12
     pst_name = "pest_adj.pst"
     pst.write(os.path.join(template_d,pst_name),version=2)
-    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=8,
-    #                             master_dir=test_d, worker_root=model_d, port=port)
+    
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
     shutil.copytree(template_d, test_d)
@@ -2574,6 +2575,8 @@ def tenpar_noise_invest():
     noise = pd.read_csv(os.path.join(test_d,"pest_adj.obs+noise.csv"),index_col=0)
     meas = pd.read_csv(os.path.join(test_d,"pest_adj.phi.meas.csv"))
     actual = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"))
+    meas.index = meas.iteration
+    actual.index = actual.iteration
 
     obs_dfs = []
     for itr in meas.iteration:
@@ -2583,8 +2586,9 @@ def tenpar_noise_invest():
     for i,df in enumerate(obs_dfs):
         obs_dfs[i] = df.loc[last_df.index,:]
 
-    fig,ax = plt.subplots(1,1,figsize=(10,10))
+    fig,axes = plt.subplots(1,3,figsize=(30,10))
 
+    ax = axes[0]
     o1,o2 = pst.nnz_obs_names
     cmap = plt.get_cmap("jet")
     for ireal,real in enumerate(last_df.index):
@@ -2600,8 +2604,20 @@ def tenpar_noise_invest():
 
         ax.annotate("{0:3.3f}".format(actual.loc[:,real].values[-1]),
             (last_df.loc[real,o1],last_df.loc[real,o2]),xytext=(0,4),textcoords="offset pixels",va="bottom",ha="center")
+    ax = axes[1]
+    ax.hist(np.log10(meas.iloc[0,6:].values),facecolor="0.5",alpha=0.5)
+    ax.hist(np.log10(meas.iloc[-1,6:].values),facecolor="b",alpha=0.5)
+    
+    ax = axes[2]
+    ax.hist(np.log10(actual.iloc[0,6:].values),facecolor="0.5",alpha=0.5)
+    ax.hist(np.log10(actual.iloc[-1,6:].values),facecolor="b",alpha=0.5)
+    
 
-    plt.show()
+    plt.tight_layout()
+    plt.savefig("noise_compare.pdf")
+    
+
+    plt.close(fig)
 
     
 
