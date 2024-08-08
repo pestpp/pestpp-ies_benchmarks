@@ -1981,13 +1981,13 @@ def tenpar_adjust_weights_test():
     assert os.path.exists(adf_file)
     adf = pd.read_csv(adf_file,index_col=0)
 
-    for oname,weight in zip(obs.index,obs.weight):
-        print(oname,weight)
-        print(wdf.loc[:,oname])
-        assert wdf.loc[:,oname].std() < 1.0e-6
-        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+    # for oname,weight in zip(obs.index,obs.weight):
+    #     print(oname,weight)
+    #     print(wdf.loc[:,oname])
+    #     assert wdf.loc[:,oname].std() < 1.0e-6
+    #     assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
     
-    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     print(wdf)
     for oname,weight in zip(adf.index,adf.weight):
@@ -1995,6 +1995,7 @@ def tenpar_adjust_weights_test():
         print(wdf.loc[:,oname])
         assert wdf.loc[:,oname].std() < 1.0e-6
         assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+
 
     sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
@@ -2020,6 +2021,28 @@ def tenpar_adjust_weights_test():
         shutil.rmtree(test_d)
     shutil.copytree(template_d, test_d)
     pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
+
+    wdf_file = os.path.join(test_d,"pest_adj.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    assert os.path.exists(adf_file)
+    adf = pd.read_csv(adf_file,index_col=0)
+
+    for oname,weight in zip(obs.index,obs.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+    
+    wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
+    wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
+    print(wdf)
+    for oname,weight in zip(adf.index,adf.weight):
+        print(oname,weight)
+        print(wdf.loc[:,oname])
+        assert wdf.loc[:,oname].std() < 1.0e-6
+        assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
 
     pst.set_res(os.path.join(test_d,"pest_adj.0.base.rei"))
     print(pst.phi)
@@ -2504,6 +2527,7 @@ def tenpar_noise_invest():
     # if os.path.exists(test_d):
     #     shutil.rmtree(test_d)
     pst.parameter_data.loc[:,"partrans"] = "log"
+    pst.parameter_data.loc[:,"pargp"] = pst.par_names
 
     obs = pst.observation_data
     # obs.loc[pst.obs_names[:4],"obgnme"] = "og1a"
@@ -2622,7 +2646,8 @@ def tenpar_noise_invest():
     
 
 if __name__ == "__main__":
-    tenpar_noise_invest()
+    tenpar_adjust_weights_test()
+    #tenpar_noise_invest()
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #twopar_freyberg_resp_surface_invest()
     #plot_twopar_resp_results()
