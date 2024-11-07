@@ -1477,6 +1477,7 @@ def zdt1_weight_test():
     t_d = os.path.join(model_d,"zdt1_template")
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     num_reals = 200
+    np.random.seed(123331)
     pe = pyemu.ParameterEnsemble.from_uniform_draw(pst,num_reals=num_reals)
     oe = pyemu.ObservationEnsemble.from_gaussian_draw(pst,pyemu.Cov.from_observation_data(pst),num_reals=num_reals)
     for oname in pst.obs_names:
