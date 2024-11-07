@@ -546,6 +546,7 @@ def tenpar_high_phi_test():
     pst.pestpp_options["lambda_scale_fac"] = [0.9, 1.0]
     pst.pestpp_options['ies_subset_size'] = 10
     pst.pestpp_options["ies_debug_high_subset_phi"] = True
+    pst.pestpp_options["ies_update_by_reals"] = False
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
     #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
@@ -561,6 +562,7 @@ def tenpar_high_phi_test():
     pst.pestpp_options["ies_lambda_mults"] = 1.0
     pst.pestpp_options["lambda_scale_fac"] = [0.9, 1.0]
     pst.pestpp_options['ies_subset_size'] = 10
+    pst.pestpp_options["ies_update_by_reals"] = False
     # pst.pestpp_options["ies_debug_high_subset_phi"] =True
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
@@ -573,6 +575,7 @@ def tenpar_high_phi_test():
     pyemu.os_utils.run("{0} {1}".format(exe_path,"pest_high_phi.pst"),cwd=test_d)  
     phi2 = pd.read_csv(os.path.join(test_d, "pest_high_phi.phi.actual.csv"), index_col=0)
     diff = phi1 - phi2
+    print(diff)
     assert diff.max().max() == 0.0
 
     pst.pestpp_options = {}
@@ -581,6 +584,7 @@ def tenpar_high_phi_test():
     pst.pestpp_options["lambda_scale_fac"] = [0.9, 1.0]
     pst.pestpp_options['ies_subset_size'] = 10
     pst.pestpp_options["ies_debug_high_upgrade_phi"] = True
+    pst.pestpp_options["ies_update_by_reals"] = False
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest_high_phi.pst"))
     #pyemu.os_utils.start_workers(template_d, exe_path, "pest_high_phi.pst", num_workers=10,
@@ -2652,7 +2656,9 @@ if __name__ == "__main__":
     #shutil.copy2(os.path.join("..","exe","windows","x64","Debug","pestpp-ies.exe"),os.path.join("..","bin","win","pestpp-ies.exe"))
     #twopar_freyberg_resp_surface_invest()
     #plot_twopar_resp_results()
-    tenpar_mean_iter_test()
+    #tenpar_high_phi_test()
+    zdt1_weight_test()
+    #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
     #tenpar_upgrade_on_disk_test_weight_ensemble_test()
