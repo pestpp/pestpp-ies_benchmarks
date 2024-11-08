@@ -2648,8 +2648,12 @@ def tenpar_noise_invest():
 
     plt.close(fig)
 
-def poly_n_iter_mean_invest():
-    t_d = os.path.join("poly","template")
+def poly_n_iter_mean_invest(b_d="poly",use_ineq=False,n_iter_mean=3):
+    port = 4343
+    if os.path.exists(b_d):
+        shutil.rmtree(b_d)
+    os.makedirs(b_d)
+    t_d = os.path.join(b_d,"template")
     if os.path.exists(t_d):
         shutil.rmtree(t_d)
     os.makedirs(t_d)
@@ -2687,7 +2691,10 @@ def poly_n_iter_mean_invest():
 
     obs = pst.observation_data
     obs.loc[:,"obsval"] = -0.1
-    obs.loc[:,"weight"] = 100.0
+    if use_ineq:
+        obs.loc[:,"obsval"] = 0.7
+        obs.loc[:,"weight"] = 100.0
+        obs.loc[:,"obgnme"] = "less_than"
 
     pst.control_data.noptmax = 0
     pst.control_data.nphinored = 1000
@@ -2696,12 +2703,12 @@ def poly_n_iter_mean_invest():
     
     num_reals = 50
     num_workers = 25
-
+    np.random.seed(11233442)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
     pe.enforce()
     pe.to_csv(os.path.join(t_d,"narrow_prior.csv"))
 
-    noptmax = 20
+    noptmax = 10
 
     #pst.pestpp_options["ies_initial_lambda"] = 1000
     #pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
@@ -2711,8 +2718,11 @@ def poly_n_iter_mean_invest():
     pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
     pst.control_data.noptmax = noptmax
     pst.write(os.path.join(t_d,"pest.pst"))
-    test1_d = os.path.join("poly","narrow_base")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test1_d,worker_root="poly")
+    test1_d = os.path.join(b_d,"narrow_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",
+                                 num_workers=num_workers,
+                                 master_dir=test1_d,worker_root=b_d,
+                                 port=port)
     
     par = pst.parameter_data
     par.loc[:,"parval1"] = 0.2
@@ -2723,57 +2733,82 @@ def poly_n_iter_mean_invest():
 
     pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
     pst.write(os.path.join(t_d,"pest.pst"))
-    test2_d = os.path.join("poly","wide_base")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test2_d,worker_root="poly")
+    test2_d = os.path.join(b_d,"wide_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test2_d,worker_root=b_d,port=port)
+
 
     pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
-    pst.pestpp_options["ies_n_iter_mean"] = 3
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
     pst.write(os.path.join(t_d,"pest.pst"))
-    test3_d = os.path.join("poly","narrow_nim")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test3_d,worker_root="poly")
+    test3_d = os.path.join(b_d,"narrow_nim")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test3_d,worker_root=b_d,port=port)
     
     pst.pestpp_options["ies_multimodal_alpha"] = 0.99
     pst.write(os.path.join(t_d,"pest.pst"))
-    test3_d = os.path.join("poly","narrow_nim_mm99")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test3_d,worker_root="poly")
+    test8_d = os.path.join(b_d,"narrow_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test8_d,worker_root=b_d,port=port)
     
     pst.pestpp_options["ies_multimodal_alpha"] = 0.99
     pst.pestpp_options["ies_n_iter_mean"] = 0
     pst.write(os.path.join(t_d,"pest.pst"))
-    test4_d = os.path.join("poly","narrow_mm99")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test4_d,worker_root="poly")
+    test4_d = os.path.join(b_d,"narrow_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test4_d,worker_root=b_d,port=port)
     
     pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
     pst.write(os.path.join(t_d,"pest.pst"))
-    test5_d = os.path.join("poly","wide_mm99")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test5_d,worker_root="poly")
+    test5_d = os.path.join(b_d,"wide_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test5_d,worker_root=b_d,port=port)
     
-    pst.pestpp_options["ies_n_iter_mean"] = 3
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
     pst.write(os.path.join(t_d,"pest.pst"))
-    test6_d = os.path.join("poly","wide_nim_mm99")
-    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test6_d,worker_root="poly")
+    test6_d = os.path.join(b_d,"wide_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test6_d,worker_root=b_d,port=port)
     
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
+    pst.pestpp_options["ies_multimodal_alpha"] = 1.0
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test7_d = os.path.join(b_d,"wide_nim")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test7_d,worker_root=b_d,port=port)
 
 
-
-    # if os.path.exists(test3_d):
-    #     shutil.rmtree(test3_d)
-    # shutil.copytree(t_d,test3_d)
-    # pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test3_d)
-
-def plot_poly():
-    b_d = "poly"
+def plot_poly(b_d="poly"):
+    
     m_ds = [os.path.join(b_d,d) for d in os.listdir(b_d) if os.path.isdir(os.path.join(b_d,d)) and d not in ["template","plot"]]
 
-    def plot_iter(pes,oes,colors,ax,xmin,xmax,ymin,ymax):
+    def plot_iter(pes,oes,colors,ax,xmin,xmax,ymin,ymax,ineq_level=None):
         x = np.linspace(xmin,xmax,300)
+
         y = x**4 + x**3 - x**2 + 1
-        ax.plot(x,y,"m",lw=2.0)
+        idx = np.where(y==y.min())
+        xmin = x[idx]
+        ax.plot(x,y,"k",lw=2.0,alpha=0.5,label="response surface")
+        if ineq_level is None:
+            ax.scatter(x[idx],y[idx],marker="*",s=70,c='r',zorder=10,label="optimum")
         for oe,pe,color in zip(oes,pes,colors):
-            ax.scatter(pe.values,oe.values,marker=".",s=40,c=color)
-        ax.set_xlim(xmin,xmax)
+            ax.scatter(pe.values,oe.values,marker=".",s=40,c=color,label="realization")
+        if ineq_level is not None:
+            ineq_idxs = np.where(y<=ineq_level)
+            yineq = y[ineq_idxs]
+            xineq = x[ineq_idxs]
+            
+            ineq_level = np.zeros_like(xineq) + ineq_level
+            #print(xineq.shape,yineq.shape,ineq_level.shape)
+            ax.fill_between(xineq,yineq,ineq_level,facecolor="r",alpha=0.75,label="ineq satisfied")
+        ax.set_xlim(x.min(),x.max())
         ax.set_ylim(ymin,ymax)
-    
+        ax.legend(loc="upper left")
+        ax.set_ylabel("objective function")
+        ax.set_xlabel("parameter")
+        ax.grid()
+        
     results = {}
     m_ds.sort()
     omin,omax = 1e30,-1e30
@@ -2792,16 +2827,56 @@ def plot_poly():
     par = pst.parameter_data
     pmin = par.loc["par","parlbnd"]
     pmax = par.loc["par","parubnd"]
-
+    omin,omax = -0.5,14
+    pmin,pmax = -2,2
     plt_d = os.path.join(b_d,"plot")
     if os.path.exists(plt_d):
         shutil.rmtree(plt_d)
     os.makedirs(plt_d)
+
+    ineq_level = None
+    obs = pst.observation_data
+    if obs.obgnme.iloc[0].startswith("less"):
+        ineq_level = obs.obsval.iloc[0]
+    def get_tag(_m_d):
+        tag = ""
+        if "nim" in _m_d:
+            tag += "cov re-inflation, "
+        if "mm" in _m_d:
+            tag += "realization loc"
+        return tag
     m_ds = [os.path.split(m_d)[-1] for m_d in m_ds]
+    fig,axes = plt.subplots(int(len(m_ds)/2),2,figsize=(6,8))
+    axes = axes.flatten()
+    mx = -1e30
+    for m_d,ax in zip(m_ds,axes):
+        phidf = results[m_d][2]
+        vals = phidf.iloc[:,6:].values
+        navals = vals.copy()
+        navals[navals==0] = np.nan
+        vals[vals==0] = np.nanmin(navals)
+        vals = np.log10(vals)
+        itr = phidf.iteration.values
+        #print(vals)
+        [ax.plot(itr,vals[:,i],"0.5",alpha=0.5,lw=0.5) for i in range(vals.shape[1])]
+        tag = get_tag(m_d)
+        label = "{1} prior ensemble\n{2}".format(i,m_d.split('_')[0],tag)
+        ax.set_title(label,loc="left")
+        mx = max(ax.get_ylim()[1],mx)
+    for ax in axes:
+        ax.set_ylim(0,mx)
+        ax.set_xlabel("iteration")
+        ax.set_ylabel("$log_{10} \\phi$")
+    plt.tight_layout()
+    plt.savefig(os.path.join(plt_d,"phi.pdf"))
+    plt.close(fig)
+
+
     for i in range(pst.control_data.noptmax):
-        fig,axes = plt.subplots(1,len(m_ds),figsize=(3*len(m_ds),4))
+        fig,axes = plt.subplots(int(len(m_ds)/2),2,figsize=(6,8))
+        axes = axes.flatten()
         for m_d,ax in zip(m_ds,axes):
-            #print(results[m_d])
+            #print(i,m_d)
             try:
                 pe,oe = results[m_d][0][i],results[m_d][1][i]
             except Exception as e:
@@ -2812,8 +2887,14 @@ def plot_poly():
             #        os.path.join(plt_d,"fig_{0:03d}.png".format(i)))
             #else:
                 pass
-            plot_iter([pe],[oe],["k"],ax,pmin,pmax,omin,omax)
-            ax.set_title("{0},{1}".format(i,m_d),loc="left")
+            plot_iter([pe],[oe],["b"],ax,pmin,pmax,omin,omax,ineq_level=ineq_level)
+            tag = get_tag(m_d)
+            label = "iteration {0}, {1} prior ensemble\n{2}".format(i,m_d.split('_')[0],tag)
+            ax.set_title(label,loc="left")
+            # if ineq_level is not None:
+            #     xlim = ax.get_xlim()
+            #     ax.plot(xlim,[ineq_level,ineq_level],"r--",label="less than")
+            #     ax.legend(loc="upper left")
         plt.tight_layout()
         plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(i)),dpi=500)
         plt.close(fig)
@@ -2830,8 +2911,13 @@ def plot_poly():
 
 
 if __name__ == "__main__":
-    poly_n_iter_mean_invest()
-    plot_poly()
+    #poly_n_iter_mean_invest()
+    #plot_poly(b_d="poly")
+    #poly_n_iter_mean_invest("poly_ineq",use_ineq=True)
+    plot_poly(b_d="poly_ineq")
+    #poly_n_iter_mean_invest(b_d="poly_minphi",n_iter_mean=-3)
+    #plot_poly(b_d="poly_minphi")
+    
     #multimodal_test()
     #tenpar_adjust_weights_test()
     #tenpar_noise_invest()
