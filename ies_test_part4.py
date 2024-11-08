@@ -2648,9 +2648,190 @@ def tenpar_noise_invest():
 
     plt.close(fig)
 
+def poly_n_iter_mean_invest():
+    t_d = os.path.join("poly","template")
+    if os.path.exists(t_d):
+        shutil.rmtree(t_d)
+    os.makedirs(t_d)
+    pd.DataFrame({"parval1":1.0},index=["par"]).to_csv(os.path.join(t_d,"par.csv"))
+    with open(os.path.join(t_d,"par.csv.tpl"),'w') as f:
+        f.write("ptf ~\n")
+        f.write("parnme,parval1\n")
+        f.write("par,~ par   ~\n")
+
+    with open(os.path.join(t_d,"forward_run.py"),'w') as f:
+        f.write("import pandas as pd\n")
+        f.write("pdf = pd.read_csv('par.csv')\n")
+        f.write("pval = float(pdf.iloc[0,1])\n")
+        f.write("sim = pval**4 + pval**3 - pval**2 + 1\n")
+        f.write("with open('sim.csv','w') as f:\n")
+        f.write("    f.write('obsnme,obsval\\n')\n")
+        f.write("    f.write('sim,'+str(sim)+'\\n')\n")
+    pyemu.os_utils.run("python forward_run.py",cwd=t_d)
+    with open(os.path.join(t_d,"sim.csv.ins"),'w') as f:
+        f.write("pif ~\n")
+        f.write("l1\n")
+        f.write("l1 ~,~ !sim!\n")
+
+    pst = pyemu.Pst.from_io_files([os.path.join(t_d,"par.csv.tpl")],
+                                  [os.path.join(t_d,"par.csv")],
+                                  [os.path.join(t_d,"sim.csv.ins")],
+                                  [os.path.join(t_d,"sim.csv")],
+                                  pst_path=".")
+    pst.model_command = "python forward_run.py"
+    par = pst.parameter_data
+    par.loc[:,"parval1"] = 1.0
+    par.loc[:,"parlbnd"] = 0.0
+    par.loc[:,"parubnd"] = 1.8
+    par.loc[:,"partrans"] = "none"
+
+    obs = pst.observation_data
+    obs.loc[:,"obsval"] = -0.1
+    obs.loc[:,"weight"] = 100.0
+
+    pst.control_data.noptmax = 0
+    pst.control_data.nphinored = 1000
+    pst.write(os.path.join(t_d,"pest.pst"))
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
+    
+    num_reals = 50
+    num_workers = 25
+
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
+    pe.enforce()
+    pe.to_csv(os.path.join(t_d,"narrow_prior.csv"))
+
+    noptmax = 20
+
+    #pst.pestpp_options["ies_initial_lambda"] = 1000
+    #pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
+    pst.pestpp_options["ies_update_by_reals"] = False
+    #pst.pestpp_options["ies_use_mda"] = True
+    
+    pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test1_d = os.path.join("poly","narrow_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test1_d,worker_root="poly")
+    
+    par = pst.parameter_data
+    par.loc[:,"parval1"] = 0.2
+    par.loc[:,"parlbnd"] = -2.0
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
+    pe.enforce()
+    pe.to_csv(os.path.join(t_d,"wide_prior.csv"))
+
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test2_d = os.path.join("poly","wide_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test2_d,worker_root="poly")
+
+    pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
+    pst.pestpp_options["ies_n_iter_mean"] = 3
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test3_d = os.path.join("poly","narrow_nim")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test3_d,worker_root="poly")
+    
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test3_d = os.path.join("poly","narrow_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test3_d,worker_root="poly")
+    
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    pst.pestpp_options["ies_n_iter_mean"] = 0
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test4_d = os.path.join("poly","narrow_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test4_d,worker_root="poly")
+    
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test5_d = os.path.join("poly","wide_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test5_d,worker_root="poly")
+    
+    pst.pestpp_options["ies_n_iter_mean"] = 3
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test6_d = os.path.join("poly","wide_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,master_dir=test6_d,worker_root="poly")
     
 
+
+
+    # if os.path.exists(test3_d):
+    #     shutil.rmtree(test3_d)
+    # shutil.copytree(t_d,test3_d)
+    # pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test3_d)
+
+def plot_poly():
+    b_d = "poly"
+    m_ds = [os.path.join(b_d,d) for d in os.listdir(b_d) if os.path.isdir(os.path.join(b_d,d)) and d not in ["template","plot"]]
+
+    def plot_iter(pes,oes,colors,ax,xmin,xmax,ymin,ymax):
+        x = np.linspace(xmin,xmax,300)
+        y = x**4 + x**3 - x**2 + 1
+        ax.plot(x,y,"m",lw=2.0)
+        for oe,pe,color in zip(oes,pes,colors):
+            ax.scatter(pe.values,oe.values,marker=".",s=40,c=color)
+        ax.set_xlim(xmin,xmax)
+        ax.set_ylim(ymin,ymax)
+    
+    results = {}
+    m_ds.sort()
+    omin,omax = 1e30,-1e30
+    for m_d in m_ds:
+        oes,pes = [],[]
+        phidf = pd.read_csv(os.path.join(m_d,"pest.phi.actual.csv"))
+        pst = pyemu.Pst(os.path.join(m_d,"pest.pst"))
+        for i in range(phidf.iteration.max()+1):
+            oe = pd.read_csv(os.path.join(m_d,"pest.{0}.obs.csv".format(i)),index_col=0)
+            omin = min(oe.values.min(),omin)
+            omax = max(oe.values.max(),omax)
+            oes.append(oe)
+            pes.append(pd.read_csv(os.path.join(m_d,"pest.{0}.par.csv".format(i)),index_col=0))
+        results[os.path.split(m_d)[-1]] = [pes,oes,phidf]
+    
+    par = pst.parameter_data
+    pmin = par.loc["par","parlbnd"]
+    pmax = par.loc["par","parubnd"]
+
+    plt_d = os.path.join(b_d,"plot")
+    if os.path.exists(plt_d):
+        shutil.rmtree(plt_d)
+    os.makedirs(plt_d)
+    m_ds = [os.path.split(m_d)[-1] for m_d in m_ds]
+    for i in range(pst.control_data.noptmax):
+        fig,axes = plt.subplots(1,len(m_ds),figsize=(3*len(m_ds),4))
+        for m_d,ax in zip(m_ds,axes):
+            #print(results[m_d])
+            try:
+                pe,oe = results[m_d][0][i],results[m_d][1][i]
+            except Exception as e:
+                pe = results[m_d][0][results[m_d][2].iteration.max()]
+                oe = results[m_d][1][results[m_d][2].iteration.max()]
+                
+            #    shutil.copy2(os.path.join(plt_d,"fig_{0:03d}.png".format(i-1)),
+            #        os.path.join(plt_d,"fig_{0:03d}.png".format(i)))
+            #else:
+                pass
+            plot_iter([pe],[oe],["k"],ax,pmin,pmax,omin,omax)
+            ax.set_title("{0},{1}".format(i,m_d),loc="left")
+        plt.tight_layout()
+        plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(i)),dpi=500)
+        plt.close(fig)
+    fps = 1
+
+    pyemu.os_utils.run("ffmpeg -y -i fig_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=plt_d)
+    pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i fig_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" -final_delay 150 logo.gif".format(fps),
+            cwd=plt_d)
+
+
+
+
+
+
+
 if __name__ == "__main__":
+    poly_n_iter_mean_invest()
+    plot_poly()
     #multimodal_test()
     #tenpar_adjust_weights_test()
     #tenpar_noise_invest()
@@ -2658,7 +2839,7 @@ if __name__ == "__main__":
     #twopar_freyberg_resp_surface_invest()
     #plot_twopar_resp_results()
     #tenpar_high_phi_test()
-    zdt1_weight_test()
+    #zdt1_weight_test()
     #tenpar_mean_iter_test()
     #freyberg_center_on_test()
     #freyberg_rcov_test()
