@@ -2698,21 +2698,24 @@ def poly_n_iter_mean_invest(b_d="poly",use_ineq=False,n_iter_mean=3):
 
     pst.control_data.noptmax = 0
     pst.control_data.nphinored = 1000
+    #pst.pestpp_options["ies_update_by_reals"] = False
+    pst.pestpp_options["ies_bad_phi_sigma"] = 1.75
     pst.write(os.path.join(t_d,"pest.pst"))
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
     
     num_reals = 50
     num_workers = 25
+    noptmax = 25
     np.random.seed(11233442)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
     pe.enforce()
     pe.to_csv(os.path.join(t_d,"narrow_prior.csv"))
 
-    noptmax = 10
+    
 
     #pst.pestpp_options["ies_initial_lambda"] = 1000
     #pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
-    pst.pestpp_options["ies_update_by_reals"] = False
+    pst.pestpp_options["ies_update_by_reals"] = True
     #pst.pestpp_options["ies_use_mda"] = True
     
     pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
@@ -2811,6 +2814,18 @@ def plot_poly(b_d="poly"):
         
     results = {}
     m_ds.sort()
+    reorder_m_ds = []
+    for m_d in m_ds:
+        if "narrow_" in os.path.split(m_d)[-1]:
+            reorder_m_ds.append(m_d)
+    i = 1
+    for m_d in m_ds:
+        if "wide_" in os.path.split(m_d)[-1]:
+            reorder_m_ds.insert(i,m_d)
+            i += 2
+    #print(m_ds)
+    m_ds = reorder_m_ds
+    #print(m_ds)
     omin,omax = 1e30,-1e30
     for m_d in m_ds:
         oes,pes = [],[]
@@ -2822,6 +2837,7 @@ def plot_poly(b_d="poly"):
             omax = max(oe.values.max(),omax)
             oes.append(oe)
             pes.append(pd.read_csv(os.path.join(m_d,"pest.{0}.par.csv".format(i)),index_col=0))
+           
         results[os.path.split(m_d)[-1]] = [pes,oes,phidf]
     
     par = pst.parameter_data
@@ -2871,7 +2887,7 @@ def plot_poly(b_d="poly"):
     plt.savefig(os.path.join(plt_d,"phi.pdf"))
     plt.close(fig)
 
-
+    iplt = 0
     for i in range(pst.control_data.noptmax):
         fig,axes = plt.subplots(int(len(m_ds)/2),2,figsize=(6,8))
         axes = axes.flatten()
@@ -2896,7 +2912,12 @@ def plot_poly(b_d="poly"):
             #     ax.plot(xlim,[ineq_level,ineq_level],"r--",label="less than")
             #     ax.legend(loc="upper left")
         plt.tight_layout()
-        plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(i)),dpi=500)
+        plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(iplt)),dpi=500)
+        iplt += 1
+        if i == 0:
+            for ii in range(5):
+                plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(iplt)),dpi=500)
+                iplt += 1
         plt.close(fig)
     fps = 1
 
@@ -2906,17 +2927,13 @@ def plot_poly(b_d="poly"):
 
 
 
-
-
-
-
 if __name__ == "__main__":
-    #poly_n_iter_mean_invest()
-    #plot_poly(b_d="poly")
-    #poly_n_iter_mean_invest("poly_ineq",use_ineq=True)
-    plot_poly(b_d="poly_ineq")
-    #poly_n_iter_mean_invest(b_d="poly_minphi",n_iter_mean=-3)
-    #plot_poly(b_d="poly_minphi")
+    poly_n_iter_mean_invest(b_d="poly_bps")
+    plot_poly(b_d="poly_bps")
+    poly_n_iter_mean_invest("poly_bps_ineq",use_ineq=True)
+    plot_poly(b_d="poly_bps_ineq")
+    poly_n_iter_mean_invest(b_d="poly_bps_minphi",n_iter_mean=-3)
+    plot_poly(b_d="poly_bps_minphi")
     
     #multimodal_test()
     #tenpar_adjust_weights_test()
