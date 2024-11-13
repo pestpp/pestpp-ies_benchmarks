@@ -2704,7 +2704,7 @@ def poly_n_iter_mean_invest(b_d="poly",use_ineq=False,n_iter_mean=3):
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
     
     num_reals = 50
-    num_workers = 25
+    num_workers = 50
     noptmax = 25
     np.random.seed(11233442)
     pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
