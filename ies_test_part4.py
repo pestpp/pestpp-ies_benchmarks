@@ -2926,14 +2926,292 @@ def plot_poly(b_d="poly"):
             cwd=plt_d)
 
 
+def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3):
+    port = 4343
+    #if os.path.exists(b_d):
+    #    shutil.rmtree(b_d)
+    #os.makedirs(b_d)
+    if not os.path.exists(b_d):
+        os.makedirs(b_d)
+    t_d = os.path.join(b_d,"template")
+    if os.path.exists(t_d):
+        shutil.rmtree(t_d)
+    os.makedirs(t_d)
+    pd.DataFrame({"parval1":[4,2]},index=["par1","par2"]).to_csv(os.path.join(t_d,"par.csv"))
+    with open(os.path.join(t_d,"par.csv.tpl"),'w') as f:
+        f.write("ptf ~\n")
+        f.write("parnme,parval1\n")
+        f.write("par1,~   par1   ~\n")
+        f.write("par2,~   par2   ~\n")
+
+    with open(os.path.join(t_d,"forward_run.py"),'w') as f:
+        f.write("import pandas as pd\n")
+        f.write("import numpy as np\n")
+        f.write("pdf = pd.read_csv('par.csv')\n")
+        f.write("pval1 = float(pdf.iloc[0,1])\n")
+        f.write("pval2 = float(pdf.iloc[1,1])\n")
+        f.write("term1 = (pval2**2)*np.e**(-pval2)\n")
+        f.write("term2 = 1. - (8.*(pval1)) + (7.*(pval1**2))\n")
+        f.write("term3 = (-(7./3.)*(pval1**3)) + (0.25*(pval1**4))\n")
+        f.write("sim = (term2 + term3) * term1\n")
+        f.write("with open('sim.csv','w') as f:\n")
+        f.write("    f.write('obsnme,obsval\\n')\n")
+        f.write("    f.write('sim,'+str(sim)+'\\n')\n")
+    pyemu.os_utils.run("python forward_run.py",cwd=t_d)
+    with open(os.path.join(t_d,"sim.csv.ins"),'w') as f:
+        f.write("pif ~\n")
+        f.write("l1\n")
+        f.write("l1 ~,~ !sim!\n")
+
+    pst = pyemu.Pst.from_io_files([os.path.join(t_d,"par.csv.tpl")],
+                                  [os.path.join(t_d,"par.csv")],
+                                  [os.path.join(t_d,"sim.csv.ins")],
+                                  [os.path.join(t_d,"sim.csv")],
+                                  pst_path=".")
+    pst.model_command = "python forward_run.py"
+    par = pst.parameter_data
+    par.loc[:,"parval1"] = 1.0
+    par.loc[:,"parlbnd"] = 0.0
+    par.loc[:,"parubnd"] = 5.0
+    par.loc[:,"partrans"] = "none"
+
+    obs = pst.observation_data
+    obs.loc[:,"obsval"] = -2.345811576101292
+    obs.loc[:,"weight"] = 100
+    
+    if use_ineq:
+        obs.loc[:,"obsval"] = -1.5
+        obs.loc[:,"weight"] = 100.0
+        obs.loc[:,"obgnme"] = "less_than"
+
+    pst.control_data.noptmax = 0
+    pst.control_data.nphinored = 1000
+    #pst.pestpp_options["ies_update_by_reals"] = False
+    pst.pestpp_options["ies_bad_phi_sigma"] = 1.75
+    pst.write(os.path.join(t_d,"pest.pst"))
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
+    
+    par.loc[:,"parval1"] = [4,2]
+    pst.write(os.path.join(t_d,"pest.pst"))
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
+    pst = pyemu.Pst(os.path.join(t_d,"pest.pst"))
+    print(pst.phi)
+    assert pst.phi < 1e-10
+   
+    pvals = []
+    for p1 in np.linspace(0,5,100):
+        for p2 in np.linspace(0,5,100):
+            pvals.append([p1,p2])
+    pvals = pd.DataFrame(pvals,columns=["par1","par2"])
+    pvals.to_csv(os.path.join(t_d,"sweep_in.csv"))
+    pst.pestpp_options["ies_par_en"] = "sweep_in.csv"
+    pst.control_data.noptmax = -1
+    sweep_d = os.path.join(b_d,"sweep")
+    pst.pestpp_options["ies_include_base"] = False
+
+    pst.write(os.path.join(t_d,"pest.pst"))
+    
+    if not os.path.exists(sweep_d):
+        num_workers = 200
+
+        pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",
+                                     num_workers=num_workers,
+                                     master_dir=sweep_d,worker_root=b_d,
+                                     port=port)
+
+    par = pst.parameter_data
+    par.loc["par1",["parlbnd","parubnd"]] = [0,3]
+    par.loc["par2",["parlbnd","parubnd"]] = [2,5]
+    par.loc[:,"parval1"] = [1.5,3.5]
+
+
+    num_reals = 50
+    num_workers = 50
+    noptmax = 25
+    np.random.seed(11233442)
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
+    pe.enforce()
+    pe.to_csv(os.path.join(t_d,"narrow_prior.csv"))
+
+    par = pst.parameter_data
+    par.loc["par1",["parlbnd","parubnd"]] = [0,5]
+    par.loc["par2",["parlbnd","parubnd"]] = [0,5]
+    par.loc[:,"parval1"] = [2.5,2.5]
+
+    #pst.pestpp_options["ies_initial_lambda"] = 1000
+    #pst.pestpp_options["ies_lambda_dec_fac"] = 1.0
+    pst.pestpp_options["ies_update_by_reals"] = False
+    #pst.pestpp_options["ies_use_mda"] = True
+    
+    pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
+
+    pst.control_data.noptmax = noptmax
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test1_d = os.path.join(b_d,"narrow_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",
+                                 num_workers=num_workers,
+                                 master_dir=test1_d,worker_root=b_d,
+                                 port=port)
+    
+    
+    pe = pyemu.ParameterEnsemble.from_gaussian_draw(pst=pst,cov=pyemu.Cov.from_parameter_data(pst),num_reals=num_reals)
+    pe.enforce()
+    pe.to_csv(os.path.join(t_d,"wide_prior.csv"))
+
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test2_d = os.path.join(b_d,"wide_base")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test2_d,worker_root=b_d,port=port)
+
+
+    pst.pestpp_options["ies_par_en"] = "narrow_prior.csv"
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test3_d = os.path.join(b_d,"narrow_nim")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test3_d,worker_root=b_d,port=port)
+    
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test8_d = os.path.join(b_d,"narrow_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test8_d,worker_root=b_d,port=port)
+    
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.99
+    pst.pestpp_options["ies_n_iter_mean"] = 0
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test4_d = os.path.join(b_d,"narrow_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test4_d,worker_root=b_d,port=port)
+    
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test5_d = os.path.join(b_d,"wide_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test5_d,worker_root=b_d,port=port)
+    
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test6_d = os.path.join(b_d,"wide_nim_mm99")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test6_d,worker_root=b_d,port=port)
+    
+    pst.pestpp_options["ies_par_en"] = "wide_prior.csv"
+    pst.pestpp_options["ies_n_iter_mean"] = n_iter_mean
+    pst.pestpp_options["ies_multimodal_alpha"] = 1.0
+    pst.write(os.path.join(t_d,"pest.pst"))
+    test7_d = os.path.join(b_d,"wide_nim")
+    pyemu.os_utils.start_workers(t_d,exe_path,"pest.pst",num_workers=num_workers,
+                                 master_dir=test7_d,worker_root=b_d,port=port)
+
+
+
+
+def plot_hosaki(b_d="hosaki",steps=100):
+    sweep_d = os.path.join(b_d,"sweep")
+    assert os.path.exists(sweep_d)
+    sweep_oe = pd.read_csv(os.path.join(sweep_d,"pest.0.obs.csv"),index_col=0)
+    sweep_pe = pd.read_csv(os.path.join(sweep_d,"pest.0.par.csv"),index_col=0)
+    
+    sweep_x = sweep_pe.loc[:,"par1"].values.reshape(steps,steps)
+    sweep_y = sweep_pe.loc[:,"par2"].values.reshape(steps,steps)
+    sweep_z = sweep_oe.loc[:,"sim"].values.reshape(steps,steps)
+
+    m_ds = [os.path.join(b_d,d) for d in os.listdir(b_d) if os.path.isdir(os.path.join(b_d,d)) and "narrow" in d]
+    results = {}
+    narrow_m_ds = []
+    for m_d in m_ds:
+        phidf = pd.read_csv(os.path.join(m_d,"pest.phi.actual.csv"))
+        pes = []
+        for i in range(phidf.iteration.max()+1):
+            pe = pd.read_csv(os.path.join(m_d,"pest.{0}.par.csv".format(i)),index_col=0)
+            pes.append(pe)
+        results[m_d] = [pes,phidf]
+        narrow_m_ds.append(m_d)
+        m_d = m_d.replace("narrow","wide")
+        print(m_d)
+        assert os.path.exists(m_d)
+        phidf = pd.read_csv(os.path.join(m_d,"pest.phi.actual.csv"))
+        pes = []
+        for i in range(phidf.iteration.max()):
+            pe = pd.read_csv(os.path.join(m_d,"pest.{0}.par.csv".format(i)),index_col=0)
+            pes.append(pe)
+        results[m_d] = [pes,phidf]
+
+    narrow_m_ds.sort()
+
+    for m_d in narrow_m_ds:
+        plt_d = os.path.join("plot",os.path.split(m_d)[-1])
+        if os.path.exists(plt_d):
+            shutil.rmtree(plt_d)
+        os.makedirs(plt_d)
+
+        npes,nphidf = results[m_d]
+        wpes,wphidf = results[m_d.replace("narrow","wide")]
+        itrs = max(nphidf.iteration.max(),wphidf.iteration.max())
+        iplt = 0
+        for i in range(itrs+1):
+            tag = os.path.split(m_d)[-1].split("_")[0]
+            if "nim" in m_d:
+                tag += ", re-inflation"
+            if "mm" in m_d:
+                tag += ", realization local"
+            tag += ", iteration {0}".format(i)
+            fig,axes = plt.subplots(1,2,figsize=(5,2))
+            cb = axes[0].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5)
+            axes[0].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='0.5')
+            plt.colorbar(cb,ax=axes[0],label="objective function")
+            if i >= len(npes):
+                pe = npes[-1]
+            else:
+                pe = npes[i]
+            axes[0].scatter(pe.par1.values,pe.par2.values,marker=".",s=10,c="w")
+            axes[0].set_title(tag,loc="left")
+            cb = axes[1].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5)
+            plt.colorbar(cb,ax=axes[1],label="objective function")
+            if i >= len(wpes):
+                pe = wpes[-1]
+            else:
+                pe = wpes[i]
+            axes[1].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='0.5')   
+            axes[1].scatter(pe.par1.values,pe.par2.values,marker=".",s=10,c="w")
+            axes[1].set_title(tag.replace("narrow","wide"),loc="left")
+            for ax in axes:
+                ax.set_yticks([])
+                ax.set_xticks([])
+                ax.set_aspect("equal")
+            
+            plt.tight_layout()
+            if i == 0:
+                for _ in range(4):
+                    plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(iplt)),dpi=500)
+                    iplt += 1
+            plt.savefig(os.path.join(plt_d,"fig_{0:03d}.png".format(iplt)),dpi=500)
+            iplt += 1
+            plt.close(fig)
+        fps = 2
+        pyemu.os_utils.run("ffmpeg -y -i fig_{0:03d}.png -vf palettegen=256 palette.png".format(i),cwd=plt_d)
+        pyemu.os_utils.run("ffmpeg -r {0} -y -s 1920X1080 -i fig_%03d.png -i palette.png -filter_complex \"scale=720:-1:flags=lanczos[x];[x][1:v]paletteuse\" -final_delay 150 logo.gif".format(fps),
+            cwd=plt_d)
+
 
 if __name__ == "__main__":
-    poly_n_iter_mean_invest(b_d="poly_bps")
-    plot_poly(b_d="poly_bps")
-    poly_n_iter_mean_invest("poly_bps_ineq",use_ineq=True)
-    plot_poly(b_d="poly_bps_ineq")
-    poly_n_iter_mean_invest(b_d="poly_bps_minphi",n_iter_mean=-3)
-    plot_poly(b_d="poly_bps_minphi")
+    hosaki_invest()
+    plot_hosaki(b_d="hosaki")
+    hosaki_invest(ineq=True,b_d="hosaki_ineq")
+    plot_hosaki(b_d="hosaki_ineq")
+    hosaki_invest(ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
+    plot_hosaki(b_d="hosaki_ineq_best")
+    
+    
+
+    # poly_n_iter_mean_invest(b_d="poly_bps")
+    # plot_poly(b_d="poly_bps")
+    # poly_n_iter_mean_invest("poly_bps_ineq",use_ineq=True)
+    # plot_poly(b_d="poly_bps_ineq")
+    # poly_n_iter_mean_invest(b_d="poly_bps_minphi",n_iter_mean=-3)
+    # plot_poly(b_d="poly_bps_minphi")
     
     #multimodal_test()
     #tenpar_adjust_weights_test()
