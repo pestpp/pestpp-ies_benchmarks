@@ -2926,7 +2926,7 @@ def plot_poly(b_d="poly"):
             cwd=plt_d)
 
 
-def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3):
+def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3,bad_phi_sigma=None):
     port = 4343
     #if os.path.exists(b_d):
     #    shutil.rmtree(b_d)
@@ -2987,7 +2987,8 @@ def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3):
     pst.control_data.noptmax = 0
     pst.control_data.nphinored = 1000
     #pst.pestpp_options["ies_update_by_reals"] = False
-    pst.pestpp_options["ies_bad_phi_sigma"] = 1.75
+    if bad_phi_sigma is not None:
+        pst.pestpp_options["ies_bad_phi_sigma"] = 1.75
     pst.write(os.path.join(t_d,"pest.pst"))
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=t_d)
     
@@ -3106,8 +3107,6 @@ def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3):
                                  master_dir=test7_d,worker_root=b_d,port=port)
 
 
-
-
 def plot_hosaki(b_d="hosaki",steps=100):
     sweep_d = os.path.join(b_d,"sweep")
     assert os.path.exists(sweep_d)
@@ -3142,7 +3141,7 @@ def plot_hosaki(b_d="hosaki",steps=100):
     narrow_m_ds.sort()
 
     for m_d in narrow_m_ds:
-        plt_d = os.path.join("plot",os.path.split(m_d)[-1])
+        plt_d = os.path.join("plot",b_d,os.path.split(m_d)[-1])
         if os.path.exists(plt_d):
             shutil.rmtree(plt_d)
         os.makedirs(plt_d)
@@ -3157,7 +3156,7 @@ def plot_hosaki(b_d="hosaki",steps=100):
                 tag += ", re-inflation"
             if "mm" in m_d:
                 tag += ", realization local"
-            tag += ", iteration {0}".format(i)
+            tag += "\n iteration {0}".format(i)
             fig,axes = plt.subplots(1,2,figsize=(5,2))
             cb = axes[0].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5)
             axes[0].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='0.5')
@@ -3199,11 +3198,11 @@ def plot_hosaki(b_d="hosaki",steps=100):
 if __name__ == "__main__":
     hosaki_invest()
     plot_hosaki(b_d="hosaki")
-    hosaki_invest(ineq=True,b_d="hosaki_ineq")
-    plot_hosaki(b_d="hosaki_ineq")
-    hosaki_invest(ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
-    plot_hosaki(b_d="hosaki_ineq_best")
-    
+    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
+    #plot_hosaki(b_d="hosaki_ineq")
+    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
+    #plot_hosaki(b_d="hosaki_ineq_best")
+
     
 
     # poly_n_iter_mean_invest(b_d="poly_bps")
