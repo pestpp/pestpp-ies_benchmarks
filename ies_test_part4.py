@@ -3021,9 +3021,9 @@ def hosaki_invest(b_d="hosaki",use_ineq=False,n_iter_mean=3,bad_phi_sigma=None):
                                      port=port)
 
     par = pst.parameter_data
-    par.loc["par1",["parlbnd","parubnd"]] = [0,3]
+    par.loc["par1",["parlbnd","parubnd"]] = [0,2]
     par.loc["par2",["parlbnd","parubnd"]] = [2,5]
-    par.loc[:,"parval1"] = [1.5,3.5]
+    par.loc[:,"parval1"] = [1.,3.5]
 
 
     num_reals = 50
@@ -3157,9 +3157,9 @@ def plot_hosaki(b_d="hosaki",steps=100):
             if "mm" in m_d:
                 tag += ", realization local"
             tag += "\n iteration {0}".format(i)
-            fig,axes = plt.subplots(1,2,figsize=(5,2))
-            cb = axes[0].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5)
-            axes[0].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='0.5')
+            fig,axes = plt.subplots(1,2,figsize=(9,4))
+            cb = axes[0].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5,cmap="magma")
+            axes[0].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='k',linewidths=0.25,linestyles="solid")
             plt.colorbar(cb,ax=axes[0],label="objective function")
             if i >= len(npes):
                 pe = npes[-1]
@@ -3167,13 +3167,13 @@ def plot_hosaki(b_d="hosaki",steps=100):
                 pe = npes[i]
             axes[0].scatter(pe.par1.values,pe.par2.values,marker=".",s=10,c="w")
             axes[0].set_title(tag,loc="left")
-            cb = axes[1].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5)
+            cb = axes[1].pcolormesh(sweep_x,sweep_y,sweep_z,alpha=0.5,cmap="magma")
             plt.colorbar(cb,ax=axes[1],label="objective function")
             if i >= len(wpes):
                 pe = wpes[-1]
             else:
                 pe = wpes[i]
-            axes[1].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='0.5')   
+            axes[1].contour(sweep_x,sweep_y,sweep_z,levels=[-2,-1],colors='k',linewidths=0.25,linestyles="solid")   
             axes[1].scatter(pe.par1.values,pe.par2.values,marker=".",s=10,c="w")
             axes[1].set_title(tag.replace("narrow","wide"),loc="left")
             for ax in axes:
@@ -3196,7 +3196,7 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
-    hosaki_invest()
+    #hosaki_invest()
     plot_hosaki(b_d="hosaki")
     #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
     #plot_hosaki(b_d="hosaki_ineq")
