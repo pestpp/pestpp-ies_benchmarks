@@ -3197,9 +3197,9 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 if __name__ == "__main__":
     #hosaki_invest()
-    plot_hosaki(b_d="hosaki")
-    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
-    #plot_hosaki(b_d="hosaki_ineq")
+    #plot_hosaki(b_d="hosaki")
+    hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
+    plot_hosaki(b_d="hosaki_ineq")
     #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
     #plot_hosaki(b_d="hosaki_ineq_best")
 

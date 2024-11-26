@@ -487,7 +487,7 @@ def test_freyberg_full_cov_reorder_run():
 
 def invest():
     d = os.path.join("ies_freyberg","master_draw_test")
-    df = pd.read_csv(os.path.join(d,"draws.dat"),delim_whitespace=True,header=None)
+    df = pd.read_csv(os.path.join(d,"draws.dat"),sep='\s+',header=None)
     print(df.std().mean(),df.mean().mean())
 
     df1 = pd.read_csv(os.path.join(d,"pest.0.par.csv"), index_col=0)
@@ -1158,7 +1158,7 @@ def tenpar_weight_pareto():
 
 
 def rosenbrock_function():
-    par_df = pd.read_csv("par.dat",delim_whitespace=True,index_col=0)
+    par_df = pd.read_csv("par.dat",sep='\s+',index_col=0)
     tot = 0.0
     for i in range(par_df.shape[0]-1):
         tot += 100.0*(par_df.iloc[i+1] - par_df.iloc[i]**2)**2 + (1 - par_df.iloc[i])**2
