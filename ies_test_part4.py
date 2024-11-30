@@ -2346,7 +2346,7 @@ def tenpar_mean_iter_test():
     pst.pestpp_options["ies_num_reals"] = 50
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["ies_debug_fail_subset"] = True
-    
+
     
     pst.write(os.path.join(test_d,pst_name))
     pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
@@ -2362,6 +2362,10 @@ def tenpar_mean_iter_test():
     print(phidf.shape)
     assert phidf.shape[0] == 29 #hard coded to noptmax above
     assert phidf.shape[1] == 55 #50 reals + summary stats
+
+    for i in phidf.index.values:
+        oe = pd.read_csv(os.path.join(test_d,"pest.{0}.obs.csv".format(i)),index_col=0)
+        assert oe.shape[1] == pst.nobs
 
 
 def twopar_freyberg_resp_surface_invest():
@@ -3196,6 +3200,8 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
+    tenpar_mean_iter_test()
+    exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
     hosaki_invest(use_ineq=True,b_d="hosaki_ineq")

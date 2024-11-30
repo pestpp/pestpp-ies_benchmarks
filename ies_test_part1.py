@@ -2481,6 +2481,10 @@ def tenpar_ineq_test():
     print(np.abs(diff.values).max())
     assert np.abs(diff.values).max() < 1e-7
 
+    m_d = os.path.join(model_d,"master_ineq_test")
+    pyemu.os_utils.start_workers(test_d,exe_path,"pest.pst",master_dir=m_d,num_workers=5,worker_root=model_d)
+
+
 
 
 if __name__ == "__main__":
