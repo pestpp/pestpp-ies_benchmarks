@@ -2389,6 +2389,7 @@ def tenpar_mean_iter_test_sched():
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["ies_no_noise"] = False
+    
 
     
     pst.write(os.path.join(test_d,pst_name))
@@ -2477,6 +2478,40 @@ def tenpar_mean_iter_test_sched():
     diff = np.array(facs) - ffacs
     print(diff)
     assert diff.sum() == 0.0
+
+    pst.pestpp_options["save_binary"] = True
+    pst.pestpp_options["save_dense"]= True
+    test_d = os.path.join(model_d, "master_mean_iter_sched_facs_dense")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    
+    pst.write(os.path.join(test_d,pst_name))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+
+    phidf = pd.read_csv(os.path.join(test_d,"pest.phi.actual.csv"),index_col=0)
+    print(phidf.loc[:,"mean"])
+    print(phidf.shape)
+    assert phidf.shape[0] == 25 #hard coded to noptmax above
+    assert phidf.shape[1] == 55 #50 reals + summary stats
+
+    pst.pestpp_options["ies_par_en"] = "pest.24.par.bin"
+    pst.pestpp_options["ies_restart_obs_en"] = "pest.24.obs.bin"
+    pst.pestpp_options["ies_obs_en"] = "pest.obs+noise.bin"
+    pst.pestpp_options["ies_weight_en"] = "pest.weights.bin"
+
+    pst.write(os.path.join(test_d,"test.pst"))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"test.pst"),cwd=test_d)
+
+    phidf2 = pd.read_csv(os.path.join(test_d,"test.phi.actual.csv"),index_col=0)
+    print(phidf2.loc[:,"mean"])
+    print(phidf2.shape)
+    assert phidf2.shape[0] == 25 #hard coded to noptmax above
+    assert phidf2.shape[1] == 45 #restart with 40 reals + summary stats
+    
+    
+
+
 
 def twopar_freyberg_resp_surface_invest():
     model_d = "twopar_freyberg"
@@ -3314,8 +3349,8 @@ if __name__ == "__main__":
     exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
-    hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
-    plot_hosaki(b_d="hosaki_ineq")
+    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
+    #plot_hosaki(b_d="hosaki_ineq")
     #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
     #plot_hosaki(b_d="hosaki_ineq_best")
 
@@ -3327,7 +3362,7 @@ if __name__ == "__main__":
     # plot_poly(b_d="poly_bps_ineq")
     # poly_n_iter_mean_invest(b_d="poly_bps_minphi",n_iter_mean=-3)
     # plot_poly(b_d="poly_bps_minphi")
-    
+    #freyberg_center_on_test()
     #multimodal_test()
     #tenpar_adjust_weights_test()
     #tenpar_noise_invest()
