@@ -1471,10 +1471,35 @@ def mm_invest():
     plt.show()
 
 
+def zdt1_ppw_worker(pst_name,host,port,helper=None):
+    import pyemu
+    ppw = pyemu.os_utils.PyPestWorker(pst_name,host,port,verbose=False)
+    pvals = ppw.get_parameters()
+    if pvals is None:
+        return
+    pvals.sort_index(inplace=True)
+    #print(pvals)
+    while True:
+
+        sim = helper(pdf=pvals.values)
+        sim = {n:s for n,s in zip(ppw._pst.obs_names,sim)}
+        sim = [sim[o] for o in ppw.obs_names]
+        #print(sim,np.array(sim).shape)
+        ppw.send_observations(np.array(sim))
+        pvals = ppw.get_parameters()
+        if pvals is None:
+            break
+        pvals.sort_index(inplace=True)
+
+
 
 def zdt1_weight_test():
     model_d = "zdt1"
     t_d = os.path.join(model_d,"zdt1_template")
+    import sys
+    sys.path.insert(0,t_d)
+    
+    from forward_run import helper 
     pst = pyemu.Pst(os.path.join(t_d,"zdt1.pst"))
     num_reals = 200
     np.random.seed(123331)
@@ -1509,11 +1534,7 @@ def zdt1_weight_test():
     df.iloc[middle_third,0] = 0.5
     df.iloc[middle_third,1] = 0.5
     df.iloc[last_third,0] = 0.99
-    df.iloc[last_third,1] = 0.01
-    
-    
-    
-    
+    df.iloc[last_third,1] = 0.01 
     df.to_csv(os.path.join(t_d,"phi_facs.csv"))
     
 
@@ -1536,8 +1557,8 @@ def zdt1_weight_test():
     weights.to_csv(os.path.join(t_d, "weights.csv"))
     pst.write(os.path.join(t_d, "zdt1_ies.pst"))
     m_d = os.path.join(model_d, "zdt1_master1")
-    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1_ies.pst", num_workers=30, worker_root=model_d, verbose=True,
-                                 master_dir=m_d,port=4200)
+    pyemu.os_utils.start_workers(t_d, exe_path, "zdt1_ies.pst", num_workers=10, worker_root=model_d, verbose=True,
+                                 master_dir=m_d,port=4200,ppw_function=zdt1_ppw_worker,ppw_kwargs={"helper":helper})
     oe_file = os.path.join(m_d,"zdt1_ies.{0}.obs.csv".format(pst.control_data.noptmax))
     assert os.path.exists(oe_file)
     oe = pd.read_csv(oe_file,index_col=0)
@@ -2509,7 +2530,18 @@ def tenpar_mean_iter_test_sched():
     assert phidf2.shape[0] == 25 #hard coded to noptmax above
     assert phidf2.shape[1] == 45 #restart with 40 reals + summary stats
     
+    pst.pestpp_options.pop("save_dense")
+
+    pst.write(os.path.join(test_d,"test2.pst"))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,"test2.pst"),cwd=test_d)
+
+    phidf2 = pd.read_csv(os.path.join(test_d,"test2.phi.actual.csv"),index_col=0)
+    print(phidf2.loc[:,"mean"])
+    print(phidf2.shape)
+    assert phidf2.shape[0] == 25 #hard coded to noptmax above
+    assert phidf2.shape[1] == 45 #restart with 40 reals + summary stats
     
+
 
 
 
@@ -3345,7 +3377,8 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
-    tenpar_mean_iter_test_sched()
+    #tenpar_mean_iter_test_sched()
+    zdt1_weight_test()
     exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
