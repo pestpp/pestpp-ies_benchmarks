@@ -1980,13 +1980,19 @@ def tenpar_adjust_weights_test():
     wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
     adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
+    rei_file = os.path.join(test_d,"pest_adj.0.base.rei")
+    pst.set_res(rei_file)
     assert os.path.exists(adf_file)
     adf = pd.read_csv(adf_file,index_col=0)
     for oname,weight in zip(adf.index,adf.weight):
         print(oname,weight)
         print(wdf.loc[:,oname])
+        print(pst.res.loc[oname,"weight"])
         assert wdf.loc[:,oname].std() < 1.0e-6
         assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+        assert np.abs(pst.res.loc[oname,"weight"] - weight) < 1.0e-3 #precision issues...
+
+
     
     
     pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
@@ -2006,6 +2012,8 @@ def tenpar_adjust_weights_test():
     adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
     assert os.path.exists(adf_file)
     adf = pd.read_csv(adf_file,index_col=0)
+    rei_file = os.path.join(test_d,"pest_adj.0.base.rei")
+    pst.set_res(rei_file)
 
     # for oname,weight in zip(obs.index,obs.weight):
     #     print(oname,weight)
@@ -2021,6 +2029,7 @@ def tenpar_adjust_weights_test():
         print(wdf.loc[:,oname])
         assert wdf.loc[:,oname].std() < 1.0e-6
         assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+        assert np.abs(pst.res.loc[oname,"weight"] - weight) < 1.0e-3 #precision issues...
 
 
     sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
@@ -2054,12 +2063,15 @@ def tenpar_adjust_weights_test():
     adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
     assert os.path.exists(adf_file)
     adf = pd.read_csv(adf_file,index_col=0)
+    rei_file = os.path.join(test_d,"pest_adj.0.base.rei")
+    pst.set_res(rei_file)
 
     for oname,weight in zip(obs.index,obs.weight):
         print(oname,weight)
         print(wdf.loc[:,oname])
         assert wdf.loc[:,oname].std() < 1.0e-6
         assert np.abs(wdf.loc[:,oname].mean() - weight) < 1.0e-3 #precision issues...
+        assert np.abs(pst.res.loc[oname,"weight"] - weight) < 1.0e-3 #precision issues...
     
     wdf_file = os.path.join(test_d,"pest_adj.adjusted.weights.jcb")
     wdf = pyemu.ObservationEnsemble.from_binary(pst=pst,filename=wdf_file)
@@ -3378,8 +3390,9 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 if __name__ == "__main__":
     #tenpar_mean_iter_test_sched()
-    zdt1_weight_test()
-    exit()
+    #zdt1_weight_test()
+    tenpar_adjust_weights_test()
+    #exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
     #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
