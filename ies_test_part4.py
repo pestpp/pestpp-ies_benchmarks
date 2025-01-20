@@ -2032,7 +2032,7 @@ def tenpar_adjust_weights_test():
         assert np.abs(pst.res.loc[oname,"weight"] - weight) < 1.0e-3 #precision issues...
 
 
-    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    sumfile = os.path.join(test_d,"pest_adj.0.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
     ogdf = pd.read_csv(sumfile)
     phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.meas.csv"),index_col=0)
@@ -2165,7 +2165,7 @@ def tenpar_adjust_weights_test_by_real():
     shutil.copytree(template_d, test_d)
     pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
-    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    sumfile = os.path.join(test_d,"pest_adj.0.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
     ogdf = pd.read_csv(sumfile)
     phidf = pd.read_csv(os.path.join(test_d,"pest_adj.phi.actual.csv"),index_col=0)
@@ -2222,7 +2222,7 @@ def tenpar_adjust_weights_test_by_real():
     shutil.copytree(template_d, test_d)
     pyemu.os_utils.run("{0} {1}".format(exe_path, pst_name), cwd=test_d)
 
-    sumfile = os.path.join(test_d,"pest_adj.obsgroupadj.summary.csv")
+    sumfile = os.path.join(test_d,"pest_adj.0.obsgroupadj.summary.csv")
     assert os.path.exists(sumfile),sumfile
     ogdf = pd.read_csv(sumfile)
     adf_file = os.path.join(test_d,"pest_adj.adjusted.obs_data.csv")
@@ -3556,10 +3556,10 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
-    tenpar_mean_iter_test_sched_phifac()
+    #tenpar_mean_iter_test_sched_phifac()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
-    #tenpar_adjust_weights_test()
+    tenpar_adjust_weights_test()
     #exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
