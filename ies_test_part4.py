@@ -2555,6 +2555,173 @@ def tenpar_mean_iter_test_sched():
     
 
 
+def tenpar_mean_iter_test_sched_phifac():
+
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_mean_iter_sched_phifac")
+    template_d = os.path.join(model_d, "test_template")
+    
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    pst.pestpp_options["ies_n_iter_mean"] = [-1,-3,5,999]
+    #pst.pestpp_options["ies_reinflate_factor"] = [1.0,0.9,0.8,0.7]
+    
+    pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 21 # hard coded to test results below
+    pst.pestpp_options["ies_num_reals"] = 50
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_no_noise"] = False
+    onames = pst.obs_names
+    obs = pst.observation_data
+    obs.loc[:,"weight"] = 1.0
+    
+    obs.loc[onames[:3],"obgnme"] = "less_than"
+    obs.loc[onames[:3],"obsval"] = obs.loc[onames[:3],"obsval"] + 0.1
+    obs.loc[onames[3:5],"obgnme"] = "first_group"
+    obs.loc[onames[5:10],"obgnme"] = "second_group"
+    obs.loc[onames[10:],"obgnme"] = "greater_than"
+    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] - 1.5
+    
+    facs = {"less_than":0.2,"first_group":0.3,"second_group":0.3,"greater_than":0.2}
+    df = pd.DataFrame(data=facs,index=np.arange(pst.pestpp_options["ies_num_reals"]))
+    df.to_csv(os.path.join(test_d,"phi.csv"))
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    pst.pestpp_options["ies_phi_factors_by_real"] = True
+    pst.pestpp_options["debug_parse_only"] = True
+    pst.control_data.noptmax = -2
+    
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+    
+    pst.control_data.noptmax = -1
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    pst.control_data.noptmax = 0
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+    
+    pst.control_data.noptmax = 21
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    pst.pestpp_options.pop("debug_parse_only")
+    
+    pst.write(os.path.join(test_d,pst_name))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=5,
+    #                                 master_dir=test_d, worker_root=model_d, port=port)
+    test_d1 = test_d + "_base"
+    if os.path.exists(test_d1):
+        shutil.rmtree(test_d1)
+    shutil.copytree(template_d,test_d1)
+    
+    phidf = pd.read_csv(os.path.join(test_d,"pest.phi.actual.csv"),index_col=0)
+    print(phidf.loc[:,"mean"])
+    print(phidf.shape)
+    assert phidf.shape[0] == 25 #hard coded to noptmax above
+    assert phidf.shape[1] == 55 #50 reals + summary stats
+
+    for i in phidf.index.values:
+        oe = pd.read_csv(os.path.join(test_d,"pest.{0}.obs.csv".format(i)),index_col=0)
+        assert oe.shape[1] == pst.nobs
+
+    count = 0
+    adj_count = 0
+    with open(os.path.join(test_d,"pest.rec"),'r') as f:
+        for line in f:
+            if "running new mean-shifted prior realizations" in line:
+                count += 1
+            elif "adjusting weights using phi factors in file" in line:
+                adj_count += 1
+    print(count)
+    assert count == 3
+    assert adj_count == 4 
+    
+
+    test_d = os.path.join(model_d, "master_mean_iter_sched_facs")
+    template_d = os.path.join(model_d, "test_template")
+
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    pst.pestpp_options["ies_n_iter_mean"] = [-1,-3,5,999]
+    pst.pestpp_options["ies_reinflate_factor"] = [1.0,0.9,0.8,0.7]
+    
+    pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 21 # hard coded to test results below
+    pst.pestpp_options["ies_num_reals"] = 50
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_no_noise"] = False
+
+    onames = pst.obs_names
+    obs = pst.observation_data
+    obs.loc[:,"weight"] = 1.0
+    
+    obs.loc[onames[:3],"obgnme"] = "less_than"
+    obs.loc[onames[:3],"obsval"] = obs.loc[onames[:3],"obsval"] + 0.1
+    obs.loc[onames[3:5],"obgnme"] = "first_group"
+    obs.loc[onames[5:10],"obgnme"] = "second_group"
+    obs.loc[onames[10:],"obgnme"] = "greater_than"
+    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] - 1.5
+    
+    facs = {"less_than":0.2,"first_group":0.3,"second_group":0.3,"greater_than":0.2}
+    df = pd.DataFrame(data=facs,index=np.arange(pst.pestpp_options["ies_num_reals"]))
+    df.to_csv(os.path.join(test_d,"phi.csv"))
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    pst.pestpp_options["ies_phi_factors_by_real"] = True
+    
+    pst.write(os.path.join(test_d,pst_name))
+    pyemu.os_utils.run("{0} {1}".format(exe_path,pst_name),cwd=test_d)
+    #pyemu.os_utils.start_workers(template_d, exe_path, pst_name, num_workers=5,
+    #                                 master_dir=test_d, worker_root=model_d, port=port)
+    test_d1 = test_d + "_base"
+    if os.path.exists(test_d1):
+        shutil.rmtree(test_d1)
+    shutil.copytree(template_d,test_d1)
+    
+    phidf = pd.read_csv(os.path.join(test_d,"pest.phi.actual.csv"),index_col=0)
+    print(phidf.loc[:,"mean"])
+    print(phidf.shape)
+    assert phidf.shape[0] == 25 #hard coded to noptmax above
+    assert phidf.shape[1] == 55 #50 reals + summary stats
+
+    for i in phidf.index.values:
+        oe = pd.read_csv(os.path.join(test_d,"pest.{0}.obs.csv".format(i)),index_col=0)
+        assert oe.shape[1] == pst.nobs
+
+    count = 0
+    facs = []
+    adj_count = 0
+    with open(os.path.join(test_d,"pest.rec"),'r') as f:
+        for line in f:
+            if "running new mean-shifted prior realizations" in line:
+                count += 1
+            elif "reinflation factor:" in line:
+                facs.append(float(line.split("reinflation factor:")[1]))
+            elif "adjusting weights using phi factors in file" in line:
+                adj_count += 1
+
+    print(count)
+    assert count == 3
+    print(facs)
+    assert len(facs) == 3
+    assert adj_count == 4
+    ffacs = pst.pestpp_options["ies_reinflate_factor"][:-1]
+    diff = np.array(facs) - ffacs
+    print(diff)
+    assert diff.sum() == 0.0
 
 
 def twopar_freyberg_resp_surface_invest():
@@ -3389,9 +3556,10 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
+    tenpar_mean_iter_test_sched_phifac()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     #exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
