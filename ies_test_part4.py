@@ -2558,7 +2558,7 @@ def tenpar_mean_iter_test_sched():
 def tenpar_mean_iter_test_sched_phifac():
 
     model_d = "ies_10par_xsec"
-    test_d = os.path.join(model_d, "master_mean_iter_sched_phifac")
+    test_d = os.path.join(model_d, "master_mean_iter_sched_phifac_single")
     template_d = os.path.join(model_d, "test_template")
     
     if not os.path.exists(template_d):
@@ -2586,8 +2586,27 @@ def tenpar_mean_iter_test_sched_phifac():
     obs.loc[onames[3:5],"obgnme"] = "first_group"
     obs.loc[onames[5:10],"obgnme"] = "second_group"
     obs.loc[onames[10:],"obgnme"] = "greater_than"
-    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] - 1.5
+    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] 
     
+    facs = {"tag":["less_than","first_group","second_group","greater_than"], "prop":[0.2,0.2,0.1,0.5]}
+
+    df = pd.DataFrame(data=facs)
+    df.to_csv(os.path.join(test_d,"phi.csv"),index=False,header=False)
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    #pst.pestpp_options["debug_parse_only"] = True
+    pst.pestpp_options["ies_verbose_level"] = 2
+    pst.control_data.noptmax = 20
+    
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+
+
+    test_d = os.path.join(model_d, "master_mean_iter_sched_phifac_multiple")
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+
     facs = {"less_than":0.2,"first_group":0.3,"second_group":0.3,"greater_than":0.2}
     df = pd.DataFrame(data=facs,index=np.arange(pst.pestpp_options["ies_num_reals"]))
     df.to_csv(os.path.join(test_d,"phi.csv"))
@@ -2642,14 +2661,10 @@ def tenpar_mean_iter_test_sched_phifac():
                 adj_count += 1
     print(count)
     assert count == 3
-    assert adj_count == 4 
+    assert adj_count == 1
     
 
     test_d = os.path.join(model_d, "master_mean_iter_sched_facs")
-    template_d = os.path.join(model_d, "test_template")
-
-    if not os.path.exists(template_d):
-        raise Exception("template_d {0} not found".format(template_d))
     if os.path.exists(test_d):
         shutil.rmtree(test_d)
     shutil.copytree(template_d,test_d)
@@ -2717,7 +2732,7 @@ def tenpar_mean_iter_test_sched_phifac():
     assert count == 3
     print(facs)
     assert len(facs) == 3
-    assert adj_count == 4
+    assert adj_count == 1
     ffacs = pst.pestpp_options["ies_reinflate_factor"][:-1]
     diff = np.array(facs) - ffacs
     print(diff)
@@ -3556,10 +3571,10 @@ def plot_hosaki(b_d="hosaki",steps=100):
 
 
 if __name__ == "__main__":
-    #tenpar_mean_iter_test_sched_phifac()
+    tenpar_mean_iter_test_sched_phifac()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
-    tenpar_adjust_weights_test()
+    #tenpar_adjust_weights_test()
     #exit()
     #hosaki_invest()
     #plot_hosaki(b_d="hosaki")
