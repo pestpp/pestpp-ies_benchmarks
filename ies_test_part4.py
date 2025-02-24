@@ -2555,7 +2555,7 @@ def tenpar_mean_iter_test_sched():
     
 
 
-def tenpar_mean_iter_test_sched_phifac():
+def tenpar_mean_iter_sched_phifac_test():
 
     model_d = "ies_10par_xsec"
     test_d = os.path.join(model_d, "master_mean_iter_sched_phifac_single")
@@ -2678,6 +2678,7 @@ def tenpar_mean_iter_test_sched_phifac():
     pst.pestpp_options["ies_num_reals"] = 50
     pst.pestpp_options["ies_debug_fail_remainder"] = True
     pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_debug_high_upgrade_phi"] = True
     pst.pestpp_options["ies_no_noise"] = False
 
     onames = pst.obs_names
@@ -3570,8 +3571,74 @@ def plot_hosaki(b_d="hosaki",steps=100):
             cwd=plt_d)
 
 
+
+
+def tenpar_fixed_restart_test():
+
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_restart_fixed")
+    template_d = os.path.join(model_d, "test_template")
+    
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    pst.pestpp_options["ies_n_iter_mean"] = [-1,-3,5,999]
+    #pst.pestpp_options["ies_reinflate_factor"] = [1.0,0.9,0.8,0.7]
+    
+    pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 21 # hard coded to test results below
+    pst.pestpp_options["ies_num_reals"] = 50
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_no_noise"] = False
+
+    par = pst.parameter_data
+    par.loc[pst.par_names[0],"partrans"] = "fixed"
+
+    onames = pst.obs_names
+    obs = pst.observation_data
+    obs.loc[:,"weight"] = 1.0
+    
+    obs.loc[onames[:3],"obgnme"] = "less_than"
+    obs.loc[onames[:3],"obsval"] = obs.loc[onames[:3],"obsval"] + 0.1
+    obs.loc[onames[3:5],"obgnme"] = "first_group"
+    obs.loc[onames[5:10],"obgnme"] = "second_group"
+    obs.loc[onames[10:],"obgnme"] = "greater_than"
+    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] 
+    
+    facs = {"tag":["less_than","first_group","second_group","greater_than"], "prop":[0.2,0.2,0.1,0.5]}
+
+    df = pd.DataFrame(data=facs)
+    df.to_csv(os.path.join(test_d,"phi.csv"),index=False,header=False)
+    pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    #pst.pestpp_options["debug_parse_only"] = True
+    pst.pestpp_options["ies_verbose_level"] = 2
+    pst.control_data.noptmax = 1
+    
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    shutil.copy2(os.path.join(test_d,"pest.1.par.csv"),os.path.join(test_d,"restart_par.csv"))
+    pst.pestpp_options["ies_restart_par_en"] = "restart_par.csv"
+    shutil.copy2(os.path.join(test_d,"pest.0.par.csv"),os.path.join(test_d,"prior_par.csv"))
+    pst.pestpp_options["ies_par_en"] = "prior_par.csv"
+    shutil.copy2(os.path.join(test_d,"pest.1.obs.csv"),os.path.join(test_d,"restart_obs.csv"))
+    pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
+    shutil.copy2(os.path.join(test_d,"pest.obs+noise.csv"),os.path.join(test_d,"noise.csv"))
+    pst.pestpp_options["ies_obs_en"] = "noise.csv"
+
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+    
+
 if __name__ == "__main__":
-    tenpar_mean_iter_test_sched_phifac()
+    tenpar_fixed_restart_test()
+    #tenpar_mean_iter_sched_phifac_test()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
     #tenpar_adjust_weights_test()
