@@ -3636,8 +3636,84 @@ def tenpar_fixed_restart_test():
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
     
 
+def tenpar_consistency_test():
+
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_consist1")
+    template_d = os.path.join(model_d, "test_template")
+    
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    #pst.pestpp_options["ies_n_iter_mean"] = [-1,-3,5,999]
+    #pst.pestpp_options["ies_reinflate_factor"] = [1.0,0.9,0.8,0.7]
+    
+    pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 6 # hard coded to test results below
+    pst.pestpp_options["ies_num_reals"] = 50
+    pst.pestpp_options["ies_debug_fail_remainder"] = True
+    pst.pestpp_options["ies_debug_fail_subset"] = True
+    pst.pestpp_options["ies_no_noise"] = False
+    pst.pestpp_options["save_binary"] = True
+    pst.pestpp_options["ies_save_lambda_en"] = True
+
+    par = pst.parameter_data
+    par.loc[pst.par_names[0],"partrans"] = "fixed"
+
+    onames = pst.obs_names
+    obs = pst.observation_data
+    obs.loc[:,"weight"] = 1.0
+    
+    obs.loc[onames[:3],"obgnme"] = "less_than"
+    obs.loc[onames[:3],"obsval"] = obs.loc[onames[:3],"obsval"] + 0.1
+    obs.loc[onames[3:5],"obgnme"] = "first_group"
+    obs.loc[onames[5:10],"obgnme"] = "second_group"
+    obs.loc[onames[10:],"obgnme"] = "greater_than"
+    obs.loc[onames[10:],"obsval"] = obs.loc[onames[10:],"obsval"] 
+    
+    facs = {"tag":["less_than","first_group","second_group","greater_than"], "prop":[0.2,0.2,0.1,0.5]}
+
+    df = pd.DataFrame(data=facs)
+    df.to_csv(os.path.join(test_d,"phi.csv"),index=False,header=False)
+    #pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
+    #pst.pestpp_options["debug_parse_only"] = True
+    pst.pestpp_options["ies_verbose_level"] = 2
+    pst.control_data.noptmax = 6
+    
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    new_test_d = os.path.join(model_d, "template_consist2")
+    if os.path.exists(new_test_d):
+        shutil.rmtree(new_test_d)
+    shutil.copytree(test_d,new_test_d)
+    m_d = new_test_d.replace("template","master")
+    #pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=new_test_d)
+    pyemu.os_utils.start_workers(new_test_d,exe_path,"pest.pst",worker_root=model_d,num_workers=10,
+        master_dir=m_d)
+    new_test_d = m_d
+
+    jcb_files = [f for f in os.listdir(test_d) if f.endswith(".jcb")]
+
+    for jcb_file in jcb_files:
+        m1 = pyemu.Matrix.from_binary(os.path.join(test_d,jcb_file)).to_dataframe()
+        m2 = pyemu.Matrix.from_binary(os.path.join(new_test_d,jcb_file)).to_dataframe()
+        m1.loc[:,:] = np.abs(m1.values)
+        m2.loc[:,:] = np.abs(m2.values)
+        
+        diff = m1 - m2
+        print(diff.sum,diff.max())
+        assert diff.values.sum() == 0.0
+
+
+        
+
 if __name__ == "__main__":
-    tenpar_fixed_restart_test()
+    tenpar_consistency_test()
     #tenpar_mean_iter_sched_phifac_test()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
