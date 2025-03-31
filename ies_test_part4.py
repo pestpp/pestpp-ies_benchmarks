@@ -96,17 +96,46 @@ def tenpar_xsec_aal_sigma_dist_test():
     pst.pestpp_options["ies_num_reals"] = 50
     pst.pestpp_options["ies_autoadaloc_sigma_dist"] = 2.0
     pst.pestpp_options["ies_autoadaloc"] = True
-    pst.pestpp_options["ies_verbose_level"] = 2
-    pst.control_data.noptmax = 1
+    pst.pestpp_options["ies_verbose_level"] = 4
+    pst.control_data.noptmax = 4
     pst.write(os.path.join(template_d, "pest_aal_sigma_dist.pst"))
-    pyemu.os_utils.start_workers(template_d, exe_path, "pest_aal_sigma_dist.pst", num_workers=10,
-                                 master_dir=test_d, verbose=True, worker_root=model_d,
-                                 port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+
+
+    # pyemu.os_utils.start_workers(template_d, exe_path, "pest_aal_sigma_dist.pst", num_workers=10,
+    #                              master_dir=test_d, verbose=True, worker_root=model_d,
+    #                             port=port)
+    pyemu.os_utils.run("{0} pest_aal_sigma_dist.pst".format(exe_path),cwd=test_d)
+
 
     df = pd.read_csv(os.path.join(test_d, "pest_aal_sigma_dist.1.autoadaloc.csv"))
     df.loc[:, "parnme"] = df.parnme.str.lower()
     df.loc[:, "obsnme"] = df.obsnme.str.lower()
     print(df.iloc[0, :])
+
+    test_d = test_d+"_dummy"
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    with open(os.path.join(test_d,"dummy.dat.tpl"),'w') as f:
+        f.write("ptf ~\n")
+        f.write(" ~ dummy1  ~\n ~ dummy2   ~\n~   dummy3    ~\n ~    dummy4   ~\n")
+    df = pst.add_parameters(os.path.join(test_d,"dummy.dat.tpl"),os.path.join(test_d,"dummy.dat"),pst_path=".")
+    pst.parameter_data.loc[df.parnme,"pargp"] = "dummy"
+    pst.pestpp_options["ies_aal_indicator_pars"] = df.parnme.tolist()
+    pst.write(os.path.join(test_d, "pest_aal_sigma_dist_indicator.pst"))
+    pyemu.os_utils.run("{0} pest_aal_sigma_dist_indicator.pst".format(exe_path),cwd=test_d)
+
+    phi = pd.read_csv(os.path.join(test_d,"pest_aal_sigma_dist_indicator.phi.actual.csv"))
+    pcs = pd.read_csv(os.path.join(test_d,"pest_aal_sigma_dist_indicator.{0}.pcs.csv".format(phi.iteration.max())),index_col=0)
+    print(pcs.loc["dummy","mean_change"])
+    assert np.abs(pcs.loc["dummy","mean_change"]) < 1e-7
+    print(pcs.loc["dummy","std_change"])
+    assert np.abs(pcs.loc["dummy","std_change"]) < 1e-7
+    
+
 
     # fig,axes = plt.subplots(pst.npar_adj,pst.nnz_obs,figsize=(6.5,11))
 
@@ -3713,7 +3742,8 @@ def tenpar_consistency_test():
         
 
 if __name__ == "__main__":
-    tenpar_consistency_test()
+    tenpar_xsec_aal_sigma_dist_test()
+    #tenpar_consistency_test()
     #tenpar_mean_iter_sched_phifac_test()
     #tenpar_mean_iter_test_sched()
     #zdt1_weight_test()
