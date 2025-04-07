@@ -124,7 +124,7 @@ def tenpar_xsec_aal_sigma_dist_test():
         f.write(" ~ dummy1  ~\n ~ dummy2   ~\n~   dummy3    ~\n ~    dummy4   ~\n")
     df = pst.add_parameters(os.path.join(test_d,"dummy.dat.tpl"),os.path.join(test_d,"dummy.dat"),pst_path=".")
     pst.parameter_data.loc[df.parnme,"pargp"] = "dummy"
-    pst.pestpp_options["ies_aal_indicator_pars"] = df.parnme.tolist()
+    pst.pestpp_options["ies_autoadaloc_indicator_pars"] = df.parnme.tolist()
     pst.write(os.path.join(test_d, "pest_aal_sigma_dist_indicator.pst"))
     pyemu.os_utils.run("{0} pest_aal_sigma_dist_indicator.pst".format(exe_path),cwd=test_d)
 
@@ -3817,7 +3817,6 @@ def temp_plot():
     m_ds = [test_d,test_d2,test_d3]
     phidfs = []
     pardfs = []
-
     for m_d in m_ds:
         phidf = pd.read_csv(os.path.join(m_d,"pest.phi.actual.csv"))
         phidfs.append(phidf)
