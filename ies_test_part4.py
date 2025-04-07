@@ -3738,11 +3738,140 @@ def tenpar_consistency_test():
         print(diff.sum,diff.max())
         assert diff.values.sum() == 0.0
 
+def tenpar_uniformdist_invest():
+
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_unidist")
+    template_d = os.path.join(model_d, "test_template")
+    
+    if not os.path.exists(template_d):
+        raise Exception("template_d {0} not found".format(template_d))
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    shutil.copytree(template_d,test_d)
+    pst_name = "pest.pst"
+    pst = pyemu.Pst(os.path.join(template_d,pst_name))
+    #pst.pestpp_options["ies_n_iter_mean"] = [-1,-3,5,999]
+    #pst.pestpp_options["ies_reinflate_factor"] = [1.0,0.9,0.8,0.7]
+    
+    #pst.pestpp_options["ies_initial_lambda"] = -100
+    pst.control_data.noptmax = 10
+    pst.pestpp_options["ies_num_reals"] = 500
+    pst.pestpp_options["ies_bad_phi_sigma"] = 1.5
+    
+    pst.pestpp_options["ies_no_noise"] = False
+    
+    par = pst.parameter_data
+    par.loc[:,"partrans"] = "none"
+    
+    draws = []
+    for lb,ub in zip(par.parlbnd,par.parubnd):
+        vals = np.random.uniform(lb,ub,pst.pestpp_options["ies_num_reals"])
+        draws.append(vals)
+    pe = pd.DataFrame(data=draws,index=par.parnme.values).T
+    pe.to_csv(os.path.join(test_d,"uni_prior.csv"))
+    pst.pestpp_options["ies_par_en"] = "uni_prior.csv"
+
+    onames = pst.obs_names
+    obs = pst.observation_data
+    obs.loc[:,"weight"] = 1.0
+    
+
+    pst.pestpp_options["ies_verbose_level"] = 2
+    pst.control_data.noptmax = 8
+    
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    test_d2 = test_d +"_reinflatemm"
+    if os.path.exists(test_d2):
+        shutil.rmtree(test_d2)
+    shutil.copytree(test_d,test_d2)
+
+    pst.pestpp_options["ies_n_iter_reinflate"] = [-1,-2,999]
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.1
+    pst.write(os.path.join(test_d2,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d2)
+
+    pst.pestpp_options = {"ies_num_reals":pst.pestpp_options["ies_num_reals"],
+                          "ies_par_en":"uni_prior.csv"}
+
+    pst.pestpp_options["ies_use_mda"] = True
+    test_d3 = test_d +"_mda"
+    if os.path.exists(test_d3):
+        shutil.rmtree(test_d3)
+    shutil.copytree(test_d,test_d3)
+    pst.write(os.path.join(test_d3,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d3)
+
+
+
+def temp_plot():
+    from matplotlib.backends.backend_pdf import PdfPages
+    model_d = "ies_10par_xsec"
+    test_d = os.path.join(model_d, "master_unidist")
+    test_d2 = test_d +"_reinflatemm"
+    test_d3 = test_d +"_mda"
+
+
+    m_ds = [test_d,test_d2,test_d3]
+    phidfs = []
+    pardfs = []
+
+    for m_d in m_ds:
+        phidf = pd.read_csv(os.path.join(m_d,"pest.phi.actual.csv"))
+        phidfs.append(phidf)
+        pardf = pd.read_csv(os.path.join(m_d,"pest.{0}.par.csv".format(phidf.iteration.max())),index_col=0)
+        pardfs.append(pardf)
+
+    with PdfPages("compare.pdf") as pdf:
+        fig,axes = plt.subplots(3,1,figsize=(8,8))
+        for ax,m_d,phidf,color in zip(axes,m_ds,phidfs,["m","c","g"]):
+            vals = np.log10(phidf.iloc[:,6:].values)
+            itrs = phidf.iteration.values
+            print(vals.shape)
+            [ax.plot(itrs,vals[:,i],lw=0.05,color=color) for i in range(vals.shape[1])]
+            ax.plot(itrs,vals[:,-1],lw=0.1,color=color,label=m_d)
+        #ax.legend(loc="upper right")
+            ax.set_title("phi "+m_d,loc="left")
+        ymax = 0
+        for ax in axes:
+            ymax = max(ymax,ax.get_ylim()[1])
+        for ax in axes:
+            ax.set_ylim(0,ymax)
+        plt.tight_layout()
+        pdf.savefig()
+        plt.close(fig)
+
+        fig,ax = plt.subplots(1,1,figsize=(10,6))
+        for m_d,phidf,color in zip(m_ds,phidfs,["m","c","g"]):
+            vals = np.log10(phidf.iloc[-1,6:].values)
+            ax.hist(vals,bins=30,alpha=0.3,facecolor=color,label=m_d)
+        ax.legend(loc="upper right")
+        ax.set_title("posterior phi")
+        plt.tight_layout()
+        pdf.savefig()
+        plt.close(fig)
+
+        pnames = pardf.columns.values
+        for pname in pnames:
+            fig,ax = plt.subplots(1,1,figsize=(8,8))
+            for m_d,pardf,color in zip(m_ds,pardfs,["m","c","g"]):
+                ax.hist(pardf.loc[:,pname].values,alpha=0.3,bins=30,facecolor=color,label=m_d)
+            ax.set_title(pname,loc="left")
+            ax.legend(loc="upper right")
+            plt.tight_layout()
+            pdf.savefig()
+            plt.close(fig)
+
 
         
 
 if __name__ == "__main__":
-    tenpar_xsec_aal_sigma_dist_test()
+    tenpar_uniformdist_invest()
+    temp_plot()
+    #tenpar_fixed_restart_test()
+    #tenpar_xsec_aal_sigma_dist_test()
     #tenpar_consistency_test()
     #tenpar_mean_iter_sched_phifac_test()
     #tenpar_mean_iter_test_sched()
