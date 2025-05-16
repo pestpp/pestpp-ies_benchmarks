@@ -3663,6 +3663,22 @@ def tenpar_fixed_restart_test():
     pst.control_data.noptmax = 1
     pst.write(os.path.join(test_d,pst_name),version=2)
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+
+    oe = pd.read_csv(os.path.join(test_d,"restart_obs.csv"),index_col=0)
+    r48_ovals = oe.loc[48,pst.obs_names]
+
+
+    pst.control_data.noptmax = -2
+    pst.pestpp_options["ies_run_realname"] = "48"
+    pst.write(os.path.join(test_d,pst_name),version=2)
+    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+    pst.set_res(os.path.join(test_d,"pest.real48.rei"))
+
+    d1 = r48_ovals - pst.res.modelled.loc[pst.obs_names]
+    print(d1)
+    assert np.abs(d1.values).sum() < 1.e-7
+
+
     
 
 def tenpar_consistency_test():
@@ -3867,9 +3883,9 @@ def temp_plot():
         
 
 if __name__ == "__main__":
-    tenpar_uniformdist_invest()
-    temp_plot()
-    #tenpar_fixed_restart_test()
+    #tenpar_uniformdist_invest()
+    #temp_plot()
+    tenpar_fixed_restart_test()
     #tenpar_xsec_aal_sigma_dist_test()
     #tenpar_consistency_test()
     #tenpar_mean_iter_sched_phifac_test()
