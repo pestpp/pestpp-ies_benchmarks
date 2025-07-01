@@ -3622,7 +3622,7 @@ def tenpar_fixed_restart_test():
     pst.control_data.noptmax = 21 # hard coded to test results below
     pst.pestpp_options["ies_num_reals"] = 50
     pst.pestpp_options["ies_debug_fail_remainder"] = True
-    pst.pestpp_options["ies_debug_fail_subset"] = True
+    #pst.pestpp_options["ies_debug_fail_subset"] = True
     pst.pestpp_options["ies_no_noise"] = False
 
     par = pst.parameter_data
@@ -3646,33 +3646,67 @@ def tenpar_fixed_restart_test():
     pst.pestpp_options["ies_phi_factor_file"] = "phi.csv"
     #pst.pestpp_options["debug_parse_only"] = True
     pst.pestpp_options["ies_verbose_level"] = 2
+    #pst.pestpp_options["ies_include_base"] = False
     pst.control_data.noptmax = 1
     
     pst.write(os.path.join(test_d,pst_name),version=2)
     pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
 
-    shutil.copy2(os.path.join(test_d,"pest.1.par.csv"),os.path.join(test_d,"restart_par.csv"))
-    pst.pestpp_options["ies_restart_par_en"] = "restart_par.csv"
-    shutil.copy2(os.path.join(test_d,"pest.0.par.csv"),os.path.join(test_d,"prior_par.csv"))
-    pst.pestpp_options["ies_par_en"] = "prior_par.csv"
-    shutil.copy2(os.path.join(test_d,"pest.1.obs.csv"),os.path.join(test_d,"restart_obs.csv"))
-    pst.pestpp_options["ies_restart_obs_en"] = "restart_obs.csv"
-    shutil.copy2(os.path.join(test_d,"pest.obs+noise.csv"),os.path.join(test_d,"noise.csv"))
-    pst.pestpp_options["ies_obs_en"] = "noise.csv"
+    #shutil.copy2(os.path.join(test_d,"pest.1.par.csv"),os.path.join(test_d,"pest.1.par.csv"))
+    #pst.pestpp_options["ies_restart_par_en"] = "pest.1.par.csv"
+    #shutil.copy2(os.path.join(test_d,"pest.0.par.csv"),os.path.join(test_d,"pest.0.par.csv"))
+    pst.pestpp_options["ies_par_en"] = "pest.1.par.csv"
+    #shutil.copy2(os.path.join(test_d,"pest.1.obs.csv"),os.path.join(test_d,"pest.1.obs.csv"))
+    #pst.pestpp_options["ies_restart_obs_en"] = "pest.1.obs.csv"
+    #shutil.copy2(os.path.join(test_d,"pest.obs+noise.csv"),os.path.join(test_d,"pest.obs+noise.csv"))
+    #pst.pestpp_options["ies_obs_en"] = "pest.obs+noise.csv"
 
+    pst.parameter_data.loc[pst.adj_par_names[0],"partrans"] = "fixed"
+    
     pst.control_data.noptmax = 1
-    pst.write(os.path.join(test_d,pst_name),version=2)
-    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
+    pst.write(os.path.join(test_d,"pest1.pst"),version=2)
+    pyemu.os_utils.run("{0} pest1.pst".format(exe_path),cwd=test_d)
 
-    oe = pd.read_csv(os.path.join(test_d,"restart_obs.csv"),index_col=0)
-    r48_ovals = oe.loc[48,pst.obs_names]
+    oetest1 = pd.read_csv(os.path.join(test_d,"pest.1.obs.csv"),index_col=0)
+    oetest1.index = [str(i) for i in oetest1.index]
+    oetest2 = pd.read_csv(os.path.join(test_d,"pest1.0.obs.csv"),index_col=0)
+    oetest2.index = [str(i) for i in oetest2.index]
+    #print(oetest1)
+    #print(oetest2)
+    diff = np.abs((oetest1 - oetest2).dropna().values)
+    #print(diff)
+    assert diff.sum() < 1e-6
+
+    it0_base_par = pyemu.pst_utils.read_parfile(os.path.join(test_d,"pest1.0.base.par"))
+    pe = pd.read_csv(os.path.join(test_d,"pest.1.par.csv"),index_col=0)
+    
+    print(pe.loc["base",:])
+    diff = (it0_base_par["parval1"] - pe.loc["base",:])
+    print(diff)
+    assert np.abs(diff.values).max() < 1e-6
+
+    it1_base_par = pyemu.pst_utils.read_parfile(os.path.join(test_d,"pest1.1.base.par"))
+    fpars = par.loc[par.partrans=="fixed","parnme"].values
+    diff = (it1_base_par.loc[fpars,"parval1"] - pe.loc["base",fpars])
+    print(diff)
+    assert np.abs(diff.values).max() < 1e-6
+
+
+    #oe = pd.read_csv(os.path.join(test_d,"restart_obs.csv"),index_col=0)
+    oe = pd.read_csv(os.path.join(test_d,"pest1.1.obs.csv"),index_col=0)
+    oe.index = [str(i) for i in oe.index]
+    r48_ovals = oe.loc["46",pst.obs_names]
 
 
     pst.control_data.noptmax = -2
-    pst.pestpp_options["ies_run_realname"] = "48"
-    pst.write(os.path.join(test_d,pst_name),version=2)
-    pyemu.os_utils.run("{0} pest.pst".format(exe_path),cwd=test_d)
-    pst.set_res(os.path.join(test_d,"pest.real48.rei"))
+    pst.pestpp_options.pop("ies_restart_obs_en",None)
+    pst.pestpp_options.pop("ies_restart_par_en",None)
+    pst.pestpp_options.pop("ies_obs_en",None)
+    pst.pestpp_options["ies_par_en"] = "pest1.1.par.csv"
+    pst.pestpp_options["ies_run_realname"] = "46"
+    pst.write(os.path.join(test_d,"pest2.pst"),version=2)
+    pyemu.os_utils.run("{0} pest2.pst".format(exe_path),cwd=test_d)
+    pst.set_res(os.path.join(test_d,"pest2.46.rei"))
 
     d1 = r48_ovals - pst.res.modelled.loc[pst.obs_names]
     print(d1)
@@ -3879,13 +3913,83 @@ def temp_plot():
             pdf.savefig()
             plt.close(fig)
 
+def freyberg_stacked_pe_invest():
+    import flopy
+    model_d = "ies_freyberg"
+    test_d = os.path.join(model_d, "master_stacked_pe")
+    template_d = os.path.join(model_d, "template")
+    # print("loading pst")
+    pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+    pst.pestpp_options = {"ies_num_reals": 10}
+    pst.pestpp_options["ies_save_lambda_en"] = True
+    pst.pestpp_options["save_dense"] = True
+    pst.pestpp_options["ies_no_noise"] = True
+    pst.control_data.noptmax = 2
+    pst.observation_data.loc[:,"weight"] = 1.0
+    pst.write(os.path.join(template_d, "pest.pst"))
+    # if os.path.exists(test_d):
+    #    shutil.rmtree(test_d)
+    # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
+    #                             worker_root=model_d, port=port)
 
-        
 
+
+    pelam_files = [f for f in os.listdir(test_d) if "lambda" in f and "par" in f and f.endswith(".bin")]
+    assert len(pelam_files) > 0
+    pes = [pyemu.ParameterEnsemble.from_binary(pst=None,filename=os.path.join(test_d,f))._df for f in pelam_files]
+    pelam = pd.concat(pes)
+    pelam.index = ["lambreal{0}".format(real) for real in range(pelam.index.shape[0])]
+    
+    pst = pyemu.Pst(os.path.join(test_d,"pest.pst"),result_dir=test_d)
+    phidf1 = pst.ies.phiactual
+    pe = pst.ies.paren
+    pe = pe.loc[pe.index.get_level_values(0)<pst.control_data.noptmax,:]
+    rnames = ["real{0}-iter{1}".format(rname,itr) for rname,itr in zip(pe.index.get_level_values(1),pe.index.get_level_values(0))]
+    pe.index = rnames
+    pe = pd.concat([pe,pelam])
+    #print(pe)
+   
+    pyemu.ParameterEnsemble(df=pe,pst=pst).to_dense(os.path.join(template_d,"comb_pe.bin"))
+    pst.pestpp_options["ies_par_en"] = "comb_pe.bin"
+    pst.pestpp_options.pop("ies_num_reals")
+    pst.pestpp_options["ies_multimodal_alpha"] = 0.15
+    pst.pestpp_options["ies_num_threads"] = 4
+    pst.control_data.noptmax = 1
+    pst.write(os.path.join(template_d, "pest.pst"))
+    test_d += "comb1"
+    # if os.path.exists(test_d):
+    #     shutil.rmtree(test_d)
+    # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
+    #                              worker_root=model_d, port=port)
+    pst = pyemu.Pst(os.path.join(test_d,"pest.pst"),result_dir=test_d)
+    phidf2 = pst.ies.phiactual
+    p1 = phidf1.loc[phidf1.iteration==phidf1.iteration.max(),:]
+    rnames = ["real{0}-iter{1}".format(realname,p1.iteration.values[0]-1) for realname in p1.columns.values[6:]]
+    rnames[-1] = "base"
+    #print(rnames)
+    #print(phidf2.columns.tolist())
+    p1 = p1.iloc[:,6:]
+    print(p1)
+    
+    p2 = phidf2.loc[phidf2.iteration==1,rnames]
+    print(p2)
+    
+   
+    fig,ax = plt.subplots(1,1)
+    #print(p1)
+    #print(p2)
+    
+    ax.hist(p1.values,alpha=0.5,fc="0.5")
+    ax.hist(p2.values,alpha=0.5,fc="b")
+    plt.show()
+
+    
 if __name__ == "__main__":
+    tenpar_fixed_restart_test()
+    exit()
     #tenpar_uniformdist_invest()
     #temp_plot()
-    tenpar_fixed_restart_test()
+    #tenpar_fixed_restart_test()
     #tenpar_xsec_aal_sigma_dist_test()
     #tenpar_consistency_test()
     #tenpar_mean_iter_sched_phifac_test()
@@ -3893,11 +3997,14 @@ if __name__ == "__main__":
     #zdt1_weight_test()
     #tenpar_adjust_weights_test()
     #exit()
-    #hosaki_invest()
-    #plot_hosaki(b_d="hosaki")
-    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq")
-    #plot_hosaki(b_d="hosaki_ineq")
-    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_best",n_iter_mean=-3)
+
+    #freyberg_stacked_pe_invest()
+
+    #hosaki_invest(b_d="hosaki_seq")
+    #plot_hosaki(b_d="hosaki_seq",n_iter_mean=[-1,-2,-4,999])
+    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_seq",n_iter_mean=[-1,-2,-4,999])
+    #plot_hosaki(b_d="hosaki_ineq_seq")
+    #hosaki_invest(use_ineq=True,b_d="hosaki_ineq_best_seq",n_iter_mean=[-1,-2,-4,999])
     #plot_hosaki(b_d="hosaki_ineq_best")
 
     
