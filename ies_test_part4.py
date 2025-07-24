@@ -3913,6 +3913,42 @@ def temp_plot():
             pdf.savefig()
             plt.close(fig)
 
+
+
+def freyberg_mean_invest():
+    import flopy
+    model_d = "ies_freyberg"
+    
+    template_d = os.path.join(model_d, "template")
+    # print("loading pst")
+    pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
+    pst.pestpp_options = {"ies_num_reals": 30}
+    
+    pst.control_data.noptmax = 3
+    pst.observation_data.loc[:,"weight"] = 1.0
+    pst.write(os.path.join(template_d, "pest.pst"))
+
+    test_d = os.path.join(model_d, "master_mean_small")
+    if os.path.exists(test_d):
+       shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
+                                worker_root=model_d, port=port)
+
+    pst.pestpp_options["ies_num_reals"] = 300
+    pst.write(os.path.join(template_d, "pest.pst"))
+
+    test_d = os.path.join(model_d, "master_mean_bug")
+    if os.path.exists(test_d):
+       shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=20, master_dir=test_d,
+                                worker_root=model_d, port=port)
+
+
+
+
+
+    
+
 def freyberg_stacked_pe_invest():
     import flopy
     model_d = "ies_freyberg"
@@ -3920,18 +3956,18 @@ def freyberg_stacked_pe_invest():
     template_d = os.path.join(model_d, "template")
     # print("loading pst")
     pst = pyemu.Pst(os.path.join(template_d, "pest.pst"))
-    pst.pestpp_options = {"ies_num_reals": 10}
+    pst.pestpp_options = {"ies_num_reals": 100}
     pst.pestpp_options["ies_save_lambda_en"] = True
     pst.pestpp_options["save_dense"] = True
     pst.pestpp_options["ies_no_noise"] = True
+    pst.pestpp_options["ies_initial_lambda"] = 1000.0
     pst.control_data.noptmax = 2
     pst.observation_data.loc[:,"weight"] = 1.0
     pst.write(os.path.join(template_d, "pest.pst"))
-    # if os.path.exists(test_d):
-    #    shutil.rmtree(test_d)
-    # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
-    #                             worker_root=model_d, port=port)
-
+    if os.path.exists(test_d):
+       shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
+                                worker_root=model_d, port=port)
 
 
     pelam_files = [f for f in os.listdir(test_d) if "lambda" in f and "par" in f and f.endswith(".bin")]
@@ -3952,15 +3988,13 @@ def freyberg_stacked_pe_invest():
     pyemu.ParameterEnsemble(df=pe,pst=pst).to_dense(os.path.join(template_d,"comb_pe.bin"))
     pst.pestpp_options["ies_par_en"] = "comb_pe.bin"
     pst.pestpp_options.pop("ies_num_reals")
-    pst.pestpp_options["ies_multimodal_alpha"] = 0.15
-    pst.pestpp_options["ies_num_threads"] = 4
     pst.control_data.noptmax = 1
     pst.write(os.path.join(template_d, "pest.pst"))
     test_d += "comb1"
-    # if os.path.exists(test_d):
-    #     shutil.rmtree(test_d)
-    # pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=10, master_dir=test_d,
-    #                              worker_root=model_d, port=port)
+    if os.path.exists(test_d):
+        shutil.rmtree(test_d)
+    pyemu.os_utils.start_workers(template_d, exe_path, "pest.pst", num_workers=30, master_dir=test_d,
+                                 worker_root=model_d, port=port)
     pst = pyemu.Pst(os.path.join(test_d,"pest.pst"),result_dir=test_d)
     phidf2 = pst.ies.phiactual
     p1 = phidf1.loc[phidf1.iteration==phidf1.iteration.max(),:]
@@ -3970,7 +4004,7 @@ def freyberg_stacked_pe_invest():
     #print(phidf2.columns.tolist())
     p1 = p1.iloc[:,6:]
     print(p1)
-    
+    print(rnames)
     p2 = phidf2.loc[phidf2.iteration==1,rnames]
     print(p2)
     
@@ -3979,14 +4013,25 @@ def freyberg_stacked_pe_invest():
     #print(p1)
     #print(p2)
     
-    ax.hist(p1.values,alpha=0.5,fc="0.5")
-    ax.hist(p2.values,alpha=0.5,fc="b")
+    #ax.hist(p1.values,alpha=0.5,fc="0.5")
+    #ax.hist(p2.values,alpha=0.5,fc="b")
+    ax.scatter(p1.values,p2.values)
+    #mn = min(ax.get_xlim()[0],ax.get_ylim()[0])
+    #mx = max(ax.get_xlim()[1],ax.get_ylim()[1])
+    #ax.semilogx()
+    #ax.semilogy()
+    #ax.set_xlim(mn,mx)
+    #ax.set_ylim(mn,mx)
+    ax.grid()
     plt.show()
 
     
 if __name__ == "__main__":
-    tenpar_fixed_restart_test()
-    exit()
+    #tenpar_fixed_restart_test()
+    #freyberg_stacked_pe_invest()
+    #freyberg_mean_invest()
+    #exit()
+    tenpar_adjust_weights_test()
     #tenpar_uniformdist_invest()
     #temp_plot()
     #tenpar_fixed_restart_test()
